@@ -1,0 +1,16 @@
+{:lint-as {reagent.core/with-let clojure.core/let}
+ :linters
+ {:unused-binding {:level :error}
+  :unused-referred-var {:level :error}
+  :redefined-var {:level :error}
+  :unused-namespace {:level :error}
+  :duplicate-require {:level :error}
+  :refer-all {:level :error}
+  :redundant-do {:level :error}
+  :redundant-let {:level :error}
+  :missing-test-assertion {:level :error}
+  :not-empty? {:level :off}
+  :cond-else {:level :off}
+  :unresolved-symbol
+  {:exclude [(clojure.test/is [thanks-not-thrown?])
+             goog.DEBUG]}}}

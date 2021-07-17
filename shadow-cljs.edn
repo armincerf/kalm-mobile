@@ -1,0 +1,11 @@
+;; shadow-cljs configuration
+{:deps true
+ :nrepl {:port       8777
+         :middleware [refactor-nrepl.middleware/wrap-refactor]}
+ :builds
+ {:app
+  {:target :react-native
+   :init-fn app.index/init
+   :output-dir "build"
+   :devtools {:autoload true
+              :preloads [shadow.expo.keep-awake]}}}}

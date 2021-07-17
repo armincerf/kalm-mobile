@@ -1,0 +1,13 @@
+.expo
+.DS_Store
+.cpcache
+.lsp
+.shadow-cljs
+.clj-kondo/*
+!.clj-kondo/.gitkeep
+!.clj-kondo/config.edn
+/build
+/node_modules
+/public/js
+/public/css
+/report.html
