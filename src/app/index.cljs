@@ -27,34 +27,62 @@
 ;; must use path relative to :output-dir
 (defonce splash-img (js/require "../assets/shadow-cljs.png"))
 
-(defn screen-main [props]
-  (let [version @(rf/subscribe [:version])
-        theme-selection @(rf/subscribe [:theme])
-        theme (-> props (j/get :theme))
-        expo-version (-> expo-constants
-                         (j/get :default)
-                         (j/get :manifest)
-                         (j/get :sdkVersion))]
+(defn activity-view
+  [{:keys [title subtitle image cycle-idx total-cycles]}]
+  [:> paper/Card
+   [:> paper/Card.Cover {:source image}]
+   (when cycle-idx
+     [:> paper/Card.Title {:title (str "Cycle number " cycle-idx " out of " total-cycles)}])
+   [:> paper/Card.Title {:title title
+                         :subtitle subtitle}]
+   [:> paper/Card.Content
+    [:> rn/View {:style (tw "flex flex-row justify-between")}]]])
+
+(def push-ups
+  {:name "Push ups"
+   :description "Hold arms in good way and push in the up direction"
+   :pre-activity [{:title "Get in the position"
+                   :image "pushup-position.jpg"
+                   :duration 5000}]
+   :activities [{:title "Push down"
+                 :duration 1000}
+                {:title "Push up"
+                 :duration 1000}]
+   :post-activity [{:title "Rest"
+                    :duration 10000}]})
+
+(def my-activity
+  {:name "Morning Routine"
+   :description "a good routine"
+   :activities [{:cycle-count 10
+                :activity push-ups}]})
+
+(defn gen-routine
+  [root-activity]
+  (let [activities
+        (flatten
+         (for [{:keys [activity cycle-count]}
+               (:activities root-activity)]
+           (concat
+            (:pre-activity activity)
+            (for [cycle (range cycle-count)]
+              (map
+               #(assoc % :cycle-idx (inc cycle) :total-cycles cycle-count)
+               (:activities activity)))
+            (:post-activity activity))))]
+    {:activities activities}))
+
+(defn screen-main [_props]
+  (let [routine (gen-routine my-activity)
+        current-activity @(rf/subscribe [:state [:current-activity]])]
     [:> rn/SafeAreaView {:style (tw "flex flex-1")}
      [:> rn/StatusBar {:visibility "hidden"}]
      [:> paper/Surface {:style (tw "flex flex-1 justify-center")}
       [:> rn/View
-       [:> paper/Card
-        [:> paper/Card.Cover {:source splash-img}]
-        [:> paper/Card.Title {:title "My new expo cljs app!"
-                              :subtitle (str "Version: " version)}]
-        [:> paper/Card.Content
-         [:> paper/Paragraph (str "Using Expo SDK: " expo-version)]
-         [:> rn/View {:style (tw "flex flex-row justify-between")}
-          [:> paper/Text
-           {:style {:color (-> theme
-                               (j/get :colors)
-                               (j/get :accent))}}
-           "Dark mode"]
-          [:> paper/Switch {:value (= theme-selection :dark)
-                            :on-value-change #(rf/dispatch [:set-theme (if (= theme-selection :dark)
-                                                                         :light
-                                                                         :dark)])}]]]]]]]))
+       [:> rn/Button
+        {:title "Click to start routine"
+         :on-press #(rf/dispatch [:start-routine (:activities routine) 0])}]
+       [activity-view current-activity]]]]))
 
 (def stack (rn-stack/createStackNavigator))
 

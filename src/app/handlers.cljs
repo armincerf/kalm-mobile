@@ -45,6 +45,19 @@
   [db [_ path value]]
   (assoc-in db (cons :state path) value))
 
+(defn start-routine
+  [{:keys [db]} [_ routine idx]]
+  (let [activity (get (vec routine) idx)]
+    (prn "activity" activity routine idx)
+    {:db (assoc-in db [:state :current-activity]
+                   activity)
+     :fx [(when activity
+            [:dispatch-later
+             {:ms (:duration activity)
+              :dispatch [:start-routine
+                         routine
+                         (inc idx)]}])]}))
+
 (defn set-theme
   [db [_ theme]]
   (->> db
@@ -60,6 +73,7 @@
   {:db (:db cofx)
    :some-fx-example x})
 
+(rf/reg-event-fx :start-routine [base-interceptors] start-routine)
 (rf/reg-event-db :set-state [base-interceptors] set-state)
 (rf/reg-event-db :initialize-db [base-interceptors] initialize-db)
 (rf/reg-event-db :set-theme [base-interceptors] set-theme)
