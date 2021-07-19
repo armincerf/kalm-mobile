@@ -1,17 +1,13 @@
 (ns app.subscriptions
   (:require [re-frame.core :refer [reg-sub]]
+            ["react-native-appearance" :refer [Appearance]]
             [com.rpl.specter :as sp :refer [select-one!]]))
 
 (defn version [db _]
   (->> db
        (select-one! [:version])))
 
-(defn theme [db _]
-  (->> db
-       (select-one! [:settings :theme])))
-
 (reg-sub :version version)
-(reg-sub :theme theme)
 
 (reg-sub
  :state

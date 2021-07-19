@@ -3,7 +3,7 @@
    [re-frame.core :as rf]
    [com.rpl.specter :as sp :refer [setval]]
    [clojure.spec.alpha :as s]
-   [app.db :as db :refer [default-app-db app-db-spec]]))
+   [app.db :as db]))
 
 (def debug? ^boolean goog.DEBUG)
 
@@ -12,8 +12,9 @@
   [spec db event]
   (when-not (s/valid? spec db)
     (tap> event)
-    (let [explanation (s/explain-str spec db)]
-      (throw (str "Spec check failed: " explanation))
+    (let [explanation (s/explain-str spec db)
+          message (str "Spec check failed: " explanation)]
+      (throw message)
       true)))
 
 (defn validate-spec [context]
@@ -21,7 +22,7 @@
         old-db (-> context :coeffects :db)
         event (-> context :coeffects :event)]
 
-    (if (some? (check-and-throw app-db-spec db event))
+    (if (some? (check-and-throw db/app-db-spec db event))
       (assoc-in context [:effects :db] old-db)
       ;; put the old db back as the new db when check fails
       ;; otherwise return context unchanged
@@ -39,7 +40,8 @@
    spec-validation])
 
 (defn initialize-db [_ _]
-  default-app-db)
+  (prn "init db")
+  db/default-app-db)
 
 (defn set-state
   [db [_ path value]]
@@ -48,20 +50,15 @@
 (defn start-routine
   [{:keys [db]} [_ routine idx]]
   (let [activity (get (vec routine) idx)]
-    (prn "activity" activity routine idx)
     {:db (assoc-in db [:state :current-activity]
                    activity)
      :fx [(when activity
             [:dispatch-later
              {:ms (:duration activity)
               :dispatch [:start-routine
+
                          routine
                          (inc idx)]}])]}))
-
-(defn set-theme
-  [db [_ theme]]
-  (->> db
-       (setval [:settings :theme] theme)))
 
 (defn set-version
   [db [_ version]]
@@ -76,6 +73,5 @@
 (rf/reg-event-fx :start-routine [base-interceptors] start-routine)
 (rf/reg-event-db :set-state [base-interceptors] set-state)
 (rf/reg-event-db :initialize-db [base-interceptors] initialize-db)
-(rf/reg-event-db :set-theme [base-interceptors] set-theme)
 (rf/reg-event-db :set-version [base-interceptors] set-version)
 (rf/reg-event-fx :some-fx-example [base-interceptors] some-fx-example)

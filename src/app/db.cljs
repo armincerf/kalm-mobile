@@ -1,13 +1,12 @@
 (ns app.db
   (:require
-   [clojure.spec.alpha :as s]
+   [app.specs :as specs]
    [spec-tools.data-spec :as ds]))
 
 (def app-db-spec
-  (ds/spec {:spec {:settings {:theme (s/spec #{:light :dark})}
-                   :version  string?}
+  (ds/spec {:spec specs/db-spec
             :name ::app-db}))
 
 (def default-app-db
-  {:settings {:theme :dark}
+  {:settings {}
    :version  "version-not-set"})

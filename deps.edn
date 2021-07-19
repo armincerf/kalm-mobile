@@ -13,4 +13,6 @@
         re-frame/re-frame {:mvn/version "1.2.0"}
         arco/arco {:mvn/version "0.3.5"}
         tick/tick {:mvn/version "0.4.32"}
-        thheller/shadow-cljs {:mvn/version "2.15.1"}}}
+        thheller/shadow-cljs {:mvn/version "2.15.1"}
+        ;;TODO dev only
+        binaryage/devtools {:mvn/version "1.0.3"}}}
