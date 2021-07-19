@@ -45,18 +45,18 @@
    :description "Hold arms in good way and push in the up direction"
    :pre-activity [{:title "Get in the position"
                    :image "pushup-position.jpg"
-                   :duration 5000}]
+                   :duration 2000}]
    :activities [{:title "Push down"
                  :duration 1000}
                 {:title "Push up"
                  :duration 1000}]
    :post-activity [{:title "Rest"
-                    :duration 10000}]})
+                    :duration 1000}]})
 
 (def my-activity
   {:name "Morning Routine"
    :description "a good routine"
-   :activities [{:cycle-count 10
+   :activities [{:cycle-count 2
                 :activity push-ups}]})
 
 (defn gen-routine
@@ -82,7 +82,11 @@
      [:> paper/Surface {:style (tw "flex flex-1 justify-center")}
       [:> rn/View
        [:> rn/Button
-        {:title "Click to start routine!"
+        {:disabled current-activity
+         :title
+         (if current-activity
+           "Running activity..."
+           "Click to start routine!")
          :on-press #(rf/dispatch [:start-routine (:activities routine) 0])}]
        [activity-view current-activity]]]]))
 
