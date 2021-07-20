@@ -47,16 +47,32 @@
   [db [_ path value]]
   (assoc-in db (cons :state path) value))
 
+(defn resume-routine
+  [{:keys [db]} _]
+  (let [idx (inc (get-in db [:state :current-idx]))
+        routine (get-in db [:state :current-routine])]
+    (if idx
+      {:fx [[:dispatch [:start-routine routine idx]]]})))
+
 (defn start-routine
   [{:keys [db]} [_ routine idx]]
-  (let [activity (get (vec routine) idx)]
-    {:db (assoc-in db [:state :current-activity]
-                   activity)
-     :fx [(when activity
+  (let [routine (vec routine)
+        activity (get routine idx)]
+    {:db (-> db
+             (assoc-in [:state :current-idx] idx)
+             (assoc-in [:state :current-routine] routine)
+             (assoc-in [:state :current-activity] activity)
+             (assoc-in [:state :prev-activity]
+                       (when (and activity
+                                  (pos? idx))
+                         (get routine (dec idx))))
+             (assoc-in [:state :next-activity]
+                       (when-let [next (get routine (inc idx))]
+                         next)))
+     :fx [(when-let [duration (:duration activity)]
             [:dispatch-later
-             {:ms (:duration activity)
+             {:ms duration
               :dispatch [:start-routine
-
                          routine
                          (inc idx)]}])]}))
 
@@ -71,6 +87,7 @@
    :some-fx-example x})
 
 (rf/reg-event-fx :start-routine [base-interceptors] start-routine)
+(rf/reg-event-fx :resume-routine  resume-routine)
 (rf/reg-event-db :set-state [base-interceptors] set-state)
 (rf/reg-event-db :initialize-db [base-interceptors] initialize-db)
 (rf/reg-event-db :set-version [base-interceptors] set-version)
