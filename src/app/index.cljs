@@ -6,14 +6,15 @@
                                       useColorScheme]]
    ["expo-constants" :as expo-constants]
    ["react-native" :as rn]
-   ["react-native-paper" :as paper]
    ["tailwind-rn" :default tailwind-rn]
+   ["native-base" :refer [NativeBaseProvider]]
 
    [applied-science.js-interop :as j]
    [reagent.core :as r]
    [re-frame.core :as rf :refer [dispatch-sync]]
    [shadow.expo :as expo]
 
+   [app.views :as views]
    [app.fx]
    [app.handlers]
    [app.subscriptions]))
@@ -29,35 +30,24 @@
 ;; must use path relative to :output-dir
 (defonce splash-img (js/require "../assets/shadow-cljs.png"))
 
-(defn activity-view
-  [{:keys [title subtitle image cycle-idx total-cycles]}]
-  [:> paper/Card
-   [:> paper/Card.Cover {:source image}]
-   (when cycle-idx
-     [:> paper/Card.Title {:title (str "Cycle number " cycle-idx " out of " total-cycles)}])
-   [:> paper/Card.Title {:title title
-                         :subtitle subtitle}]
-   [:> paper/Card.Content
-    [:> rn/View {:style (tw "flex flex-row justify-between")}]]])
-
 (def push-ups
   {:name "Push ups"
    :description "Hold arms in good way and push in the up direction"
    :pre-activity [{:title "Get in the position"
-                   :image "pushup-position.jpg"
                    :duration 2000}]
    :activities [{:title "Push down"
-                 :duration 1000}
+                 :duration 1000
+                 :image "https://www.wikihow.com/images/thumb/5/53/Do-a-Push-Up-Step-15-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-15-Version-3.jpg"}
                 {:title "Push up"
+                 :image "https://www.wikihow.com/images/thumb/9/98/Do-a-Push-Up-Step-13-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-13-Version-3.jpg"
                  :duration 1000}]
-   :post-activity [{:title "Rest"
-                    :duration 1000}]})
+   :post-activity [{:title "Rest"}]})
 
 (def my-activity
   {:name "Morning Routine"
    :description "a good routine"
    :activities [{:cycle-count 2
-                :activity push-ups}]})
+                 :activity push-ups}]})
 
 (defn gen-routine
   [root-activity]
@@ -72,23 +62,13 @@
                #(assoc % :cycle-idx (inc cycle) :total-cycles cycle-count)
                (:activities activity)))
             (:post-activity activity))))]
-    {:activities activities}))
+    (assoc root-activity :activities activities)))
 
 (defn screen-main [_props]
   (let [routine (gen-routine my-activity)
-        current-activity @(rf/subscribe [:state [:current-activity]])]
-    [:> rn/SafeAreaView {:style (tw "flex flex-1")}
-     [:> rn/StatusBar {:visibility "hidden"}]
-     [:> paper/Surface {:style (tw "flex flex-1 justify-center")}
-      [:> rn/View
-       [:> rn/Button
-        {:disabled current-activity
-         :title
-         (if current-activity
-           "Running activity..."
-           "Click to start routine!")
-         :on-press #(rf/dispatch [:start-routine (:activities routine) 0])}]
-       [activity-view current-activity]]]]))
+        current-activity @(rf/subscribe [:state [:current-activity]])
+        running? (not (empty? current-activity))]
+    [views/home routine current-activity running?]))
 
 (def stack (rn-stack/createStackNavigator))
 
@@ -101,12 +81,7 @@
         !navigation-ref (clojure.core/atom {})]
     [:> AppearanceProvider
      (let [theme (keyword (useColorScheme))]
-       [:> paper/Provider
-        {:theme (case theme
-                  :light paper/DefaultTheme
-                  :dark  paper/DarkTheme
-                  paper/DefaultTheme)}
-
+       [:> NativeBaseProvider
         [:> nav/NavigationContainer
          {:ref (fn [el] (reset! !navigation-ref el))
           :on-ready (fn []
@@ -126,7 +101,7 @@
 
          [:> (navigator) {:header-mode "none"}
           (screen {:name "Screen1"
-                   :component (paper/withTheme (r/reactify-component screen-main))})]]])]))
+                   :component (r/reactify-component screen-main)})]]])]))
 
 (defn start
   []
