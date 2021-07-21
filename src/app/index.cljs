@@ -34,35 +34,56 @@
   {:name "Push ups"
    :description "Hold arms in good way and push in the up direction"
    :pre-activity [{:title "Get in the position"
-                   :duration 2000}]
+                   :image "https://www.memecreator.org/static/images/memes/4789102.jpg"
+                   :duration 3000}]
    :activities [{:title "Push down"
-                 :duration 1000
+                 :duration 2000
                  :image "https://www.wikihow.com/images/thumb/5/53/Do-a-Push-Up-Step-15-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-15-Version-3.jpg"}
                 {:title "Push up"
                  :image "https://www.wikihow.com/images/thumb/9/98/Do-a-Push-Up-Step-13-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-13-Version-3.jpg"
-                 :duration 1000}]
-   :post-activity [{:title "Rest"}]})
+                 :duration 2000}]
+   :post-activity [{:title "Nice work! Go eat a cake"
+                    :image "https://memegenerator.net/img/instances/45717809.jpg"}]})
+
+(def jumping-jacks
+  {:name "Jumping Jacks"
+   :description "Jump as many times as you can"
+   :activities [{:title "Jump as much as you can in the time limit, also do some jacks."
+                 :duration 100000000
+
+                 :image "https://media1.tenor.com/images/1c91aac996db1dec02eac2ddbd86ad30/tenor.gif"}]})
 
 (def my-activity
   {:name "Morning Routine"
    :description "a good routine"
    :activities [{:cycle-count 2
-                 :activity push-ups}]})
+                 :activity push-ups}
+                {:activity jumping-jacks}]})
 
 (defn gen-routine
   [root-activity]
   (let [activities
-        (flatten
-         (for [{:keys [activity cycle-count]}
-               (:activities root-activity)]
-           (concat
-            (:pre-activity activity)
-            (for [cycle (range cycle-count)]
-              (map
-               #(assoc % :cycle-idx (inc cycle) :total-cycles cycle-count)
-               (:activities activity)))
-            (:post-activity activity))))]
-    (assoc root-activity :activities activities)))
+        (remove
+         nil?
+         (flatten
+          (for [{:keys [activity cycle-count]}
+                (:activities root-activity)]
+            (concat
+             (:pre-activity activity)
+             (for [cycle (range (or cycle-count 1))]
+               (map
+                #(assoc % :cycle-idx (inc cycle) :total-cycles cycle-count)
+                (:activities activity)))
+             (:post-activity activity)))))
+        total-time (reduce
+                    (fn [count activity]
+                      (+ count (:duration activity)))
+                    0
+                    activities)]
+    (assoc root-activity
+           :activities activities
+           :total-time total-time)))
+
 
 (defn screen-main [_props]
   (let [routine (gen-routine my-activity)

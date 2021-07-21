@@ -2,6 +2,7 @@
   (:require
    [reagent.core :as r]
    [re-frame.core :as rf :refer [dispatch-sync]]
+   ["react-native-countdown-circle-timer" :refer [CountdownCircleTimer]]
    ["native-base" :refer [Pressable
                           Box
                           SectionList
@@ -11,36 +12,81 @@
                           Button
                           Text
                           Heading]]
+   ["react-native" :as ReactNative]
    [applied-science.js-interop :as j]))
 
+(def countdown (r/adapt-react-class CountdownCircleTimer))
+(def animated-text (r/adapt-react-class (.-Text (.-Animated ReactNative))))
+(def text (r/adapt-react-class (.-Text ReactNative)))
+
+(defn countdown-display
+  [duration key preview?]
+  [:> Center
+      [countdown
+       {:isPlaying (not preview?)
+        :key key
+        :duration (/ duration 1000)
+        :colors [["#004777" 0.4]
+                 ["#F7B801" 0.4]
+                 ["#A30000" 0.2]]}
+       (fn [^js props]
+         (let [remaining-time (j/get props :remainingTime)
+               color (j/get props :animatedColor)
+               pad (fn [t] (if (and t (< t 10)) (str "0" t) t))
+               hours (when (>= remaining-time 3600)
+                       (js/Math.floor (/ remaining-time 3600)))
+               mins (when (>= remaining-time 60)
+                      (js/Math.floor (/ (mod remaining-time 3600) 60)))
+               hours (pad hours)
+               mins (pad mins)
+               seconds (mod remaining-time 60)]
+           (r/as-element
+            [:<>
+             [text "Remaining"]
+             [animated-text
+              {:style {:color color
+                       :fontSize 37}}
+              (cond
+                hours
+                (str hours ":" mins ":" seconds)
+                mins
+                (str mins ":" seconds)
+                :else
+                seconds)]
+             (when-not mins
+               [text "seconds"])])))]])
+
 (defn activity-view
-  [{:keys [title subtitle image cycle-idx total-cycles] :as activity}]
-  (prn "Rendering activity: " activity)
-  [:> Box
-   {:bg "white"
-    :m 5
-    :shadow 2
-    :rounded "lg"}
-   [:> Image {:source {:uri image}
-              :alt (or title "Activity")
-              :resizeMode "cover"
-              :height 150}]
-   (when cycle-idx
-     [:> Heading (str "Cycle number " cycle-idx " out of " total-cycles)])
-   [:> Heading
-    {:size ["md" "lg" "md"]
-     :noOfLines 2}
-    title
-    subtitle]])
+  ([activity] (activity-view activity false))
+  ([{:keys [title subtitle image cycle-idx total-cycles] :as activity} preview?]
+   (prn "Rendering activity: " activity)
+   [:> Box
+    {:bg "white"
+     :m 5
+     :shadow 2
+     :rounded "lg"}
+    (when-let [duration (:duration activity)]
+      [countdown-display duration (str title cycle-idx) preview?])
+    [:> Image {:source {:uri image}
+               :alt (or title "Activity")
+               :resizeMode "stretch"
+               :height 250}]
+    (when (and cycle-idx total-cycles)
+      [:> Heading (str "Cycle number " cycle-idx " out of " total-cycles)])
+    [:> Center
+     [:> Heading
+      {:size ["md" "lg" "md"]
+       :noOfLines 2}
+      title
+      subtitle]]]))
 
 (defn routine-view
-  [{:keys [name description activities]}]
-  (let [sectioned-activities
-        activities]
+  [{:keys [activities]}]
+  (let [sectioned-activities activities]
     [:> SectionList
      {:sections [{:title "Section" :data sectioned-activities}]
-      :keyExtractor (fn [^js activity] (str (j/get activity :title) (or (j/get activity :cycle-idx) 0)) )
-      :renderItem #(r/as-element (activity-view (js->clj (.-item %) :keywordize-keys true)))}]))
+      :keyExtractor (fn [^js activity] (str (j/get activity :title) (or (j/get activity :cycle-idx) 0)))
+      :renderItem #(r/as-element (activity-view (js->clj (.-item %) :keywordize-keys true) true))}]))
 
 (defn no-duration-button
   []
@@ -52,7 +98,7 @@
      "Finish")])
 
 (defn home
-  [routine current-activity running?]
+  [_ _ _]
   (let [show-preview? (r/atom false)]
     (fn [routine current-activity running?]
       [:<>
