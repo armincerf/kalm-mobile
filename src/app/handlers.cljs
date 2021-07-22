@@ -3,40 +3,10 @@
    [re-frame.core :as rf]
    [re-frame.db :as rf-db]
    ["smart-timeout" :as timeout]
-   [com.rpl.specter :as sp :refer [setval]]
-   [clojure.spec.alpha :as s]
    [app.db :as db]
    [reagent.core :as r]))
 
 (def debug? ^boolean goog.DEBUG)
-
-(defn check-and-throw
-  "Throw an exception if db doesn't have a valid spec."
-  [spec db event]
-  (when-not (s/valid? spec db)
-    (tap> event)
-    (let [explanation (s/explain-str spec db)
-          message (str "Spec check failed: " explanation)]
-      (throw message)
-      true)))
-
-(defn validate-spec [context]
-  (let [db (-> context :effects :db)
-        old-db (-> context :coeffects :db)
-        event (-> context :coeffects :event)]
-
-    (if (some? (check-and-throw db/app-db-spec db event))
-      (assoc-in context [:effects :db] old-db)
-      ;; put the old db back as the new db when check fails
-      ;; otherwise return context unchanged
-      context)))
-
-(def spec-validation
-  (if debug?
-    (rf/->interceptor
-     :id :spec-validation
-     :after validate-spec)
-    rf/->interceptor))
 
 (def base-interceptors
   [(when debug? rf/debug)])
@@ -80,8 +50,7 @@
 
 (defn set-version
   [db [_ version]]
-  (->> db
-       (setval [:version] version)))
+  (assoc db :version version))
 
 (defn timeout-fn
   [^js timeout fn]
@@ -99,6 +68,11 @@
   [{:keys [db]} [_ timeout]]
   {:fx [[:timeout-resume timeout]]
    :db (assoc-in db [:state :timeout-paused?] false)})
+
+(defn stop
+  [{:keys [db]} [_ timeout]]
+  {:fx [[:timeout-clear timeout]]
+   :db (dissoc db :state)})
 
 (rf/reg-fx
  :timeout-pause
@@ -138,3 +112,4 @@
 (rf/reg-event-db :set-version [base-interceptors] set-version)
 (rf/reg-event-fx :pause [base-interceptors] pause)
 (rf/reg-event-fx :resume [base-interceptors] resume)
+(rf/reg-event-fx :stop [base-interceptors] stop)

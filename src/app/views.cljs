@@ -127,10 +127,15 @@
         (when running?
           (let [timeout @(rf/subscribe [:state [:timeout]])
                 paused? @(rf/subscribe [:paused?])]
-            [:> Button
-             {:size "sm"
-              :on-press #(rf/dispatch [(if paused? :resume :pause) timeout])}
-             (if paused? "Resume" "Pause")]))
+            [:<>
+             [:> Button
+              {:size "sm"
+               :on-press #(rf/dispatch [(if paused? :resume :pause) timeout])}
+              (if paused? "Resume" "Pause")]
+             [:> Button
+              {:size "sm"
+               :on-press #(rf/dispatch [:stop timeout])}
+              "Stop"]]))
 
         (when (and current-activity
                    (not (:duration current-activity)))

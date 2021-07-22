@@ -8,7 +8,8 @@
           "userInterfaceStyle": "dark"
       },
       "name": "kalm",
-      "slug": "kalm",
+      "slug": "kalm-routine",
+      "owner": "armincerf",
       "privacy": "public",
       "entryPoint": "./build/index.js",
       "platforms": [

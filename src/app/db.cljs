@@ -1,11 +1,4 @@
-(ns app.db
-  (:require
-   [app.specs :as specs]
-   [spec-tools.data-spec :as ds]))
-
-(def app-db-spec
-  (ds/spec {:spec specs/db-spec
-            :name ::app-db}))
+(ns app.db)
 
 (def default-app-db
   {:settings {}

@@ -15,7 +15,6 @@
    [shadow.expo :as expo]
 
    [app.views :as views]
-   [app.fx]
    [app.handlers]
    [app.subscriptions]))
 

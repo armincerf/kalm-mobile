@@ -1,12 +1,8 @@
 (ns app.subscriptions
   (:require [re-frame.core :as rf]
-            ["react-native-appearance" :refer [Appearance]]
-            [com.rpl.specter :as sp :refer [select-one!]]))
+            ["react-native-appearance" :refer [Appearance]]))
 
-(defn version [db _]
-  (->> db
-       (select-one! [:version])))
-
+(defn version [db _] (:version db))
 (rf/reg-sub :version version)
 
 (rf/reg-sub
