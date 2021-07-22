@@ -41,7 +41,7 @@
                  :image "https://www.wikihow.com/images/thumb/5/53/Do-a-Push-Up-Step-15-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-15-Version-3.jpg"}
                 {:title "Push up"
                  :image "https://www.wikihow.com/images/thumb/9/98/Do-a-Push-Up-Step-13-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-13-Version-3.jpg"
-                 :duration 2000}]
+                 :duration 1000}]
    :post-activity [{:title "Nice work! Go eat a cake"
                     :image "https://memegenerator.net/img/instances/45717809.jpg"}]})
 
@@ -56,7 +56,7 @@
 (def my-activity
   {:name "Morning Routine"
    :description "a good routine"
-   :activities [{:cycle-count 2
+   :activities [{:cycle-count 5
                  :activity push-ups}
                 {:activity jumping-jacks}]})
 

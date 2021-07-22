@@ -13,3 +13,10 @@
  :state
  (fn [db [_ path]]
    (get-in db (cons :state path))))
+
+(rf/reg-sub
+ :paused?
+ (fn [db _]
+   (some-> db
+           :state
+           :timeout-paused?)))

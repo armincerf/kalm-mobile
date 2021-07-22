@@ -21,40 +21,41 @@
 
 (defn countdown-display
   [duration key preview?]
-  [:> Center
-      [countdown
-       {:isPlaying (not preview?)
-        :key key
-        :duration (/ duration 1000)
-        :colors [["#004777" 0.4]
-                 ["#F7B801" 0.4]
-                 ["#A30000" 0.2]]}
-       (fn [^js props]
-         (let [remaining-time (j/get props :remainingTime)
-               color (j/get props :animatedColor)
-               pad (fn [t] (if (and t (< t 10)) (str "0" t) t))
-               hours (when (>= remaining-time 3600)
-                       (js/Math.floor (/ remaining-time 3600)))
-               mins (when (>= remaining-time 60)
-                      (js/Math.floor (/ (mod remaining-time 3600) 60)))
-               hours (pad hours)
-               mins (pad mins)
-               seconds (mod remaining-time 60)]
-           (r/as-element
-            [:<>
-             [text "Remaining"]
-             [animated-text
-              {:style {:color color
-                       :fontSize 37}}
-              (cond
-                hours
-                (str hours ":" mins ":" seconds)
-                mins
-                (str mins ":" seconds)
-                :else
-                seconds)]
-             (when-not mins
-               [text "seconds"])])))]])
+  (let [paused? @(rf/subscribe [:paused?])]
+    [:> Center
+     [countdown
+      {:isPlaying (and (not preview?) (not paused?))
+       :key key
+       :duration (/ duration 1000)
+       :colors [["#004777" 0.4]
+                ["#F7B801" 0.4]
+                ["#A30000" 0.2]]}
+      (fn [^js props]
+        (let [remaining-time (.-remainingTime props)
+              color (.-animatedColor props)
+              pad (fn [t] (if (and t (< t 10)) (str "0" t) t))
+              hours (when (>= remaining-time 3600)
+                      (js/Math.floor (/ remaining-time 3600)))
+              mins (when (>= remaining-time 60)
+                     (js/Math.floor (/ (mod remaining-time 3600) 60)))
+              hours (pad hours)
+              mins (pad mins)
+              seconds (mod remaining-time 60)]
+          (r/as-element
+           [:<>
+            [text "Remaining"]
+            [animated-text
+             {:style {:color color
+                      :fontSize 37}}
+             (cond
+               hours
+               (str hours ":" mins ":" seconds)
+               mins
+               (str mins ":" seconds)
+               :else
+               seconds)]
+            (when-not mins
+              [text "seconds"])])))]]))
 
 (defn activity-view
   ([activity] (activity-view activity false))
@@ -123,6 +124,13 @@
          (if running?
            "Running activity..."
            "Click to start routine")]
+        (when running?
+          (let [timeout @(rf/subscribe [:state [:timeout]])
+                paused? @(rf/subscribe [:paused?])]
+            [:> Button
+             {:size "sm"
+              :on-press #(rf/dispatch [(if paused? :resume :pause) timeout])}
+             (if paused? "Resume" "Pause")]))
 
         (when (and current-activity
                    (not (:duration current-activity)))

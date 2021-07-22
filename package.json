@@ -28,6 +28,7 @@
     "react-native-svg": "^12.1.1",
     "react-native-web": "~0.13.12",
     "reanimated-bottom-sheet": "^1.0.0-alpha.22",
+    "smart-timeout": "^2.5.2",
     "styled-components": "^5.3.0",
     "styled-system": "^5.1.5",
     "tailwind-rn": "^3.0.1"

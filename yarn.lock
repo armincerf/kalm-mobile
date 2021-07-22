@@ -10034,6 +10034,11 @@ slugify@^1.3.4:
   resolved "https://registry.yarnpkg.com/slugify/-/slugify-1.6.0.tgz#6bdf8ed01dabfdc46425b67e3320b698832ff893"
   integrity sha512-FkMq+MQc5hzYgM86nLuHI98Acwi3p4wX+a5BO9Hhw4JdK4L7WueIiZ4tXEobImPqBz2sVcV0+Mu3GRB30IGang==
 
+smart-timeout@^2.5.2:
+  version "2.5.2"
+  resolved "https://registry.yarnpkg.com/smart-timeout/-/smart-timeout-2.5.2.tgz#9b2edd8cd54d39cb3a5cd7cdf8b58c7f72b7939c"
+  integrity sha512-0XhnGvfE3o7MMrpsO+6SX4eyzVpXb20pw5uLVn6Mr4gOwYL/9vkV1GofZDLDQ9txWIQMsD/8Vsu+txeSQ0Z7Ww==
+
 snapdragon-node@^2.0.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/snapdragon-node/-/snapdragon-node-2.1.1.tgz#6c175f86ff14bdb0724563e8f3c1b021a286853b"
