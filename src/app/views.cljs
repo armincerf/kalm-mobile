@@ -77,7 +77,7 @@
                  :alt (or title "Activity")
                  :resizeMode "stretch"
                  :height 250}])
-    (when (and cycle-idx total-cycles)
+    (when (and cycle-idx (> cycle-idx 1) total-cycles)
       [:> Heading (str "Cycle number " cycle-idx " out of " total-cycles)])
     [:> Center
      [:> Heading
@@ -130,17 +130,21 @@
           [:> HStack
            {:space 1
             :alignItems "center"}
-           [:> Button
-            {:disabled running?
-             :m 3
-             :size "sm"
-             :on-press #(rf/dispatch [:start-routine routine 0])}
-            (if running?
-              "Running activity..."
-              "Click to start routine")]
+           (when-not running?
+             [:> Button
+              {:m 3
+               :size "sm"
+               :on-press #(rf/dispatch [:start-routine routine 0])}
+              "Click to start routine"])
            (when running?
              (let [paused? @(rf/subscribe [:paused? name])]
                [:<>
+                (when @(rf/subscribe [:state [id :next-activity]])
+                  [:> Button
+                   {:size "sm"
+                    :m 3
+                    :on-press #(rf/dispatch [:resume-routine id])}
+                   "Skip"])
                 [:> Button
                  {:size "sm"
                   :m 3
