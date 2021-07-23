@@ -2,12 +2,14 @@
   (:require
    [reagent.core :as r]
    [re-frame.core :as rf :refer [dispatch-sync]]
+   [clojure.edn :as edn]
    ["react-native-countdown-circle-timer" :refer [CountdownCircleTimer]]
    ["native-base" :refer [Pressable
                           Box
                           SectionList
                           Slide
                           Image
+                          HStack
                           Center
                           Button
                           Text
@@ -20,13 +22,16 @@
 (def text (r/adapt-react-class (.-Text ReactNative)))
 
 (defn countdown-display
-  [duration key preview?]
-  (let [paused? @(rf/subscribe [:paused?])]
+  [{:keys [duration name cycle-idx]} preview?]
+  (let [paused? @(rf/subscribe [:paused?])
+        time-left @(rf/subscribe [:time-left])
+        duration (or time-left duration)]
     [:> Center
      [countdown
-      {:isPlaying (and (not preview?) (not paused?))
-       :key key
-       :duration (/ duration 1000)
+      {:isPlaying (boolean (and (not preview?)
+                                (not paused?)))
+       :key (gensym name)
+       :duration (js/Math.round (/ duration 1000))
        :colors [["#004777" 0.4]
                 ["#F7B801" 0.4]
                 ["#A30000" 0.2]]}
@@ -60,18 +65,18 @@
 (defn activity-view
   ([activity] (activity-view activity false))
   ([{:keys [title subtitle image cycle-idx total-cycles] :as activity} preview?]
-   (prn "Rendering activity: " activity)
    [:> Box
     {:bg "white"
      :m 5
      :shadow 2
      :rounded "lg"}
-    (when-let [duration (:duration activity)]
-      [countdown-display duration (str title cycle-idx) preview?])
-    [:> Image {:source {:uri image}
-               :alt (or title "Activity")
-               :resizeMode "stretch"
-               :height 250}]
+    (when (:duration activity)
+      [countdown-display activity preview?])
+    (when image
+      [:> Image {:source {:uri image}
+                 :alt (or title "Activity")
+                 :resizeMode "stretch"
+                 :height 250}])
     (when (and cycle-idx total-cycles)
       [:> Heading (str "Cycle number " cycle-idx " out of " total-cycles)])
     [:> Center
@@ -84,64 +89,87 @@
 (defn routine-view
   [{:keys [activities]}]
   (let [sectioned-activities activities]
-    [:> SectionList
-     {:sections [{:title "Section" :data sectioned-activities}]
-      :keyExtractor (fn [^js activity] (str (j/get activity :title) (or (j/get activity :cycle-idx) 0)))
-      :renderItem #(r/as-element (activity-view (js->clj (.-item %) :keywordize-keys true) true))}]))
+    (when (seq sectioned-activities)
+      [:> SectionList
+       {:sections [{:title "Section" :data sectioned-activities}]
+        :keyExtractor (fn [^js activity] (str (j/get activity :title) (or (j/get activity :cycle-idx) 0)))
+        :renderItem #(r/as-element (activity-view (js->clj (.-item %) :keywordize-keys true) true))}])))
 
 (defn no-duration-button
-  []
+  [id]
   [:> Button
    {:size "sm"
-    :on-press #(rf/dispatch [:resume-routine])}
-   (if @(rf/subscribe [:state [:next-activity]])
+    :m 3
+    :on-press #(rf/dispatch [:resume-routine id])}
+   (if @(rf/subscribe [:state [id :next-activity]])
      "Next Step"
      "Finish")])
 
-(defn home
+(defn routine-player
   [_ _ _]
   (let [show-preview? (r/atom false)]
-    (fn [routine current-activity running?]
-      [:<>
-       [:> Box
-        {:bg "primary.100"
-         :my 10
-         :py 2
-         :px 2
-         :rounded "md"
-         :alignSelf "center"
-         :width 375}
-        [:> Heading (:name routine)]
-        [:> Text (:description routine)]
-        [:> Button
-         {:size "sm"
-          :on-press #(swap! show-preview? not)}
-         (if @show-preview? "Hide Preview" "Show Preview")]
-        [:> Button
-         {:disabled running?
-          :size "sm"
-          :on-press #(rf/dispatch [:start-routine (:activities routine) 0])}
-         (if running?
-           "Running activity..."
-           "Click to start routine")]
-        (when running?
-          (let [timeout @(rf/subscribe [:state [:timeout]])
-                paused? @(rf/subscribe [:paused?])]
-            [:<>
-             [:> Button
-              {:size "sm"
-               :on-press #(rf/dispatch [(if paused? :resume :pause) timeout])}
-              (if paused? "Resume" "Pause")]
-             [:> Button
-              {:size "sm"
-               :on-press #(rf/dispatch [:stop timeout])}
-              "Stop"]]))
+    (fn [{:keys [route]} current-activity running?]
+      (let [{:keys [name description] :as routine}
+            (edn/read-string (.-props (.-params route)))
+            id name]
+        [:<>
+         [:> Box
+          {:bg "primary.100"
+           :my 10
+           :py 2
+           :px 2
+           :rounded "md"
+           :alignSelf "center"}
+          [:> Heading name]
+          [:> Text description]
+          [:> Button
+           {:size "sm"
+            :m 3
+            :on-press #(swap! show-preview? not)}
+           (if @show-preview? "Hide Preview" "Show Preview")]
+          [:> HStack
+           {:space 1
+            :alignItems "center"}
+           [:> Button
+            {:disabled running?
+             :m 3
+             :size "sm"
+             :on-press #(rf/dispatch [:start-routine routine 0])}
+            (if running?
+              "Running activity..."
+              "Click to start routine")]
+           (when running?
+             (let [paused? @(rf/subscribe [:paused? name])]
+               [:<>
+                [:> Button
+                 {:size "sm"
+                  :m 3
+                  :on-press #(rf/dispatch [(if paused? :resume :pause) id])}
+                 (if paused? "Resume" "Pause")]
+                [:> Button
+                 {:size "sm"
+                  :m 3
+                  :on-press #(rf/dispatch [:stop id])}
+                 "Stop"]]))]
 
-        (when (and current-activity
-                   (not (:duration current-activity)))
-          [no-duration-button])
+          (when (and current-activity
+                     (not (:duration current-activity)))
+            [no-duration-button id])
 
-        (when current-activity
-          [activity-view current-activity])]
-       (when @show-preview?
-         [routine-view routine])])))
+          (when current-activity
+            [activity-view current-activity])]
+         (when @show-preview?
+           [routine-view routine])]))))
+
+(defn routines
+  [{:keys [navigation]} routines]
+  [:<>
+   [:> Heading "Your routines"]
+   (for [routine routines]
+     ^{:key (:name routine)}
+     [:> Button
+      {:size "sm"
+       :m 5
+       :on-press #(rf/dispatch
+                   [:navigate navigation "Routine" routine])}
+      (:name routine)])])

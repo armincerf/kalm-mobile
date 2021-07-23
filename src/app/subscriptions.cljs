@@ -11,8 +11,24 @@
    (get-in db (cons :state path))))
 
 (rf/reg-sub
- :paused?
+ :page
  (fn [db _]
-   (some-> db
-           :state
-           :timeout-paused?)))
+   (:current-page db)))
+
+(rf/reg-sub
+ :paused?
+ (fn [db [_ name]]
+   (let [id (or name (get-in db [:current-page :props :name]))]
+     (some-> db
+             :state
+             (get id)
+             :timeout-paused?))))
+
+(rf/reg-sub
+ :time-left
+ (fn [db [_ name]]
+   (let [id (or name (get-in db [:current-page :props :name]))]
+     (some-> db
+             :state
+             (get id)
+             :time-remaining))))
