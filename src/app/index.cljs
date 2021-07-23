@@ -88,6 +88,36 @@
                  :description "get into bed and close eyes"
                  :activities [{:title "go to sleep"}]}]})
 
+(defn mins->millis
+  [min]
+  (* min 60 1000))
+
+(def chores
+  [{:title "Hoover"
+    :duration (mins->millis 15)}
+   {:title "Sort through files (post/paperwork etc)"
+    :duration (mins->millis 5)}
+   {:title "Clean up rubbish"
+    :duration (mins->millis 10)}
+   {:title "Put on a wash"
+    :duration (mins->millis 5)}
+   {:title "Put Clothes Away"
+    :duration (mins->millis 10)}
+   {:title "Do the dusting"
+    :duration (mins->millis 15)}
+   {:title "Wipe the surfaces"
+    :duration (mins->millis 10)}
+   {:title "Change the bedclothes"
+    :duration (mins->millis 10)}
+   {:title "Clean the bathroom"
+    :duration (mins->millis 30)}
+   {:title "Clean the kitchen"
+    :duration (mins->millis 20)}])
+
+(def random-chores
+  {:name "Random Chores"
+   :activities (vec (shuffle chores))})
+
 (defn gen-routine
   [root-activity]
   (def root-activity root-activity)
@@ -103,10 +133,13 @@
                 activity (if activity?
                            props
                            (:activity props))
+                activities (if (:duration props)
+                             [props]
+                             (:activities activity))
                 cycle-count (:cycle-count props)]
             (concat
              (:pre-activity activity)
-             (gen-cycles (:activities activity) (or cycle-count 1))
+             (gen-cycles activities (or cycle-count 1))
              (:post-activity activity))))
         gen-activities (fn [activities]
                          (for [props activities]
@@ -125,6 +158,7 @@
 (defn screen-home [props]
   (let [routines (mapv gen-routine [my-activity
                                     jacks
+                                    random-chores
                                     lazy])]
     [views/routines props routines]))
 
