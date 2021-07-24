@@ -28,7 +28,7 @@
   [{:keys [duration name cycle-idx]} preview?]
   (let [paused? @(rf/subscribe [:paused?])
         time-left @(rf/subscribe [:time-left])
-        duration (or time-left duration)]
+        duration (or (and (not preview?) time-left) duration)]
     [:> Center
      [countdown
       {:isPlaying (boolean (and (not preview?)
