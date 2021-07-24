@@ -15,11 +15,14 @@
                           Text
                           Heading]]
    ["react-native" :as ReactNative]
+
+   [app.components :refer [ActionSheet]]
+
    [applied-science.js-interop :as j]))
 
 (def countdown (r/adapt-react-class CountdownCircleTimer))
-(def animated-text (r/adapt-react-class (.-Text (.-Animated ReactNative))))
-(def text (r/adapt-react-class (.-Text ReactNative)))
+(def animated-text (r/adapt-react-class (.-Text (.-Animated ^js ReactNative))))
+(def text (r/adapt-react-class (.-Text ^js ReactNative)))
 
 (defn countdown-display
   [{:keys [duration name cycle-idx]} preview?]
@@ -169,6 +172,7 @@
   [{:keys [navigation]} routines]
   [:<>
    [:> Heading "Your routines"]
+   [:> ActionSheet]
    (for [routine routines]
      ^{:key (:name routine)}
      [:> Button
