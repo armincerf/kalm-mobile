@@ -4,3 +4,5 @@
 
 
 (def ActionSheet (.-default (js/require "../src/stories/ActionSheet.jsx")))
+
+(def RoutineList (.-default (js/require "../src/stories/RoutineList.jsx")))

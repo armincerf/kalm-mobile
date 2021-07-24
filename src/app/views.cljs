@@ -16,7 +16,7 @@
                           Heading]]
    ["react-native" :as ReactNative]
 
-   [app.components :refer [ActionSheet]]
+   [app.components :refer [RoutineList]]
 
    [applied-science.js-interop :as j]))
 
@@ -170,14 +170,16 @@
 
 (defn routines
   [{:keys [navigation]} routines]
-  [:<>
-   [:> Heading "Your routines"]
-   [:> ActionSheet]
-   (for [routine routines]
-     ^{:key (:name routine)}
-     [:> Button
-      {:size "sm"
-       :m 5
-       :on-press #(rf/dispatch
-                   [:navigate navigation "Routine" routine])}
-      (:name routine)])])
+  (let [grouped-routines (mapv (fn [[k v]]
+                                 {:title (or k "No Type") :data v})
+                               (group-by :type routines))]
+    [:<>
+     [:> Box {:bg "white"}
+      [:> Heading "Your routines!"]]
+     [:> RoutineList
+      {:data grouped-routines
+       :handlePress
+       (fn [^js a]
+         (rf/dispatch
+          [:navigate navigation "Routine"
+           (js->clj a :keywordize-keys true)]))}]]))

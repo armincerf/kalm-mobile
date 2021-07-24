@@ -54,6 +54,7 @@
 
 (def my-activity
   {:name "Morning Routine"
+   :type "Meditation"
    :description "a good routine"
    :activities [{:cycle-count 5
                  :activity push-ups}
@@ -61,12 +62,14 @@
 
 (def jacks
   {:name "Jumping jacks x 5"
+   :type "Fitness"
    :description "good for fitness"
    :activities [{:cycle-count 5
                  :activity jumping-jacks}]})
 
 (def lazy
-  {:name "Get ready for bed2"
+  {:name "Get ready for bed"
+   :type "Chores"
    :description "do this or you won't sleep"
    :activities [{:name "Brush Teeth"
                  :description "Hold brush and hit teeth with it"
@@ -116,6 +119,7 @@
 
 (def random-chores
   {:name "Random Chores"
+   :type "Chores"
    :activities (vec (shuffle chores))})
 
 (defn gen-routine
