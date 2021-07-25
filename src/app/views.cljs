@@ -57,9 +57,9 @@
                       :fontSize 37}}
              (cond
                hours
-               (str hours ":" mins ":" seconds)
+               (str hours ":" mins ":" (pad seconds))
                mins
-               (str mins ":" seconds)
+               (str mins ":" (pad seconds))
                :else
                seconds)]
             (when-not mins

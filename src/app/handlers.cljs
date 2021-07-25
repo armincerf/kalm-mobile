@@ -163,7 +163,6 @@
      (doseq [effect (remove nil? value)]
        (dispatch-later effect)))))
 
-
 (rf/reg-event-fx :start-routine [base-interceptors] start-routine)
 (rf/reg-event-fx :resume-routine  resume-routine)
 (rf/reg-event-db :set-state [base-interceptors] set-state)
