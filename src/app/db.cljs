@@ -9,9 +9,10 @@
 (defn default-app-db
   []
   (go
-    (let [db-string (<p! (.getItem AsyncStorage "@db"))
+    (let [db-string (try (edn/read-string (<p! (.getItem AsyncStorage "@db")))
+                         (catch :default e
+                           (prn e)))
           db (if db-string
-               (edn/read-string db-string)
                {:settings {}
                 :version "version-not-set"})]
       (prn "init db = " db)
