@@ -139,14 +139,16 @@
                                             :duration
                                             (* 1000 duration)))
                                    [data])}]
-    (def data data)
-    {:db (update-in db [:state :my-routines] conj routine)}))
+    {:db (update-in db [:state :my-routines] conj routine)
+     :fx [[:navigate! [(:navigation db) "Home"]]]}))
 
 (defn navigate
   [{:keys [db]} [_ navigation route props]]
   {:fx [[:navigate! [navigation route props]]]
-   :db (assoc db :current-page {:name route
-                                :props props})})
+   :db (assoc db
+              :current-page {:name route
+                             :props props}
+              :navigation navigation)})
 
 (rf/reg-fx
  :navigate!
