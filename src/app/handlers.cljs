@@ -173,3 +173,5 @@
 (rf/reg-event-fx :stop [base-interceptors] stop)
 (rf/reg-event-fx :navigate [base-interceptors] navigate)
 (rf/reg-event-fx :add-routine [base-interceptors] add-routine)
+
+(rf/reg-event-db :wipe-db [base-interceptors] (fn [_ _] {}))
