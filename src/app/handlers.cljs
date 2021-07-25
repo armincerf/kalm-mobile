@@ -3,17 +3,32 @@
    [re-frame.core :as rf]
    [re-frame.db :as rf-db]
    ["smart-timeout" :as timeout]
+   ["@react-native-async-storage/async-storage" :default AsyncStorage]
    [app.db :as db]
    [reagent.core :as r]))
 
 (def debug? ^boolean goog.DEBUG)
 
-(def base-interceptors
-  [(when debug? rf/debug)])
+(defn store-key
+  [key value-str]
+  (.setItem AsyncStorage key value-str))
 
-(defn initialize-db [_ _]
-  (prn "init db")
-  db/default-app-db)
+(def persist-db
+  (rf/->interceptor
+   :id :persist-db
+   :before (fn [context]
+             context)
+   :after (fn [context]
+            (when-let [value (get-in context [:effects :db])]
+              (store-key "@db" (prn-str value)))
+            context)))
+
+(def base-interceptors
+  [(when debug? rf/debug)
+   persist-db])
+
+(defn initialize-db [_ [_ db]]
+  db)
 
 (defn set-state
   [db [_ path value]]
@@ -150,8 +165,8 @@
 (rf/reg-event-fx :start-routine [base-interceptors] start-routine)
 (rf/reg-event-fx :resume-routine  resume-routine)
 (rf/reg-event-db :set-state [base-interceptors] set-state)
-(rf/reg-event-db :initialize-db [base-interceptors] initialize-db)
-(rf/reg-event-db :set-version [base-interceptors] set-version)
+(rf/reg-event-db :initialize-db initialize-db)
+(rf/reg-event-db :set-version set-version)
 (rf/reg-event-fx :pause [base-interceptors] pause)
 (rf/reg-event-fx :save-time-left [base-interceptors] save-time-left)
 (rf/reg-event-fx :resume [base-interceptors] resume)

@@ -18,7 +18,8 @@
    [app.views :as views]
    [app.components :as c]
    [app.handlers]
-   [app.subscriptions]))
+   [app.subscriptions]
+   [app.db :as db]))
 
 (defn tw [style-str]
   ;; https://github.com/vadimdemedes/tailwind-rn#supported-utilities
@@ -243,6 +244,6 @@
 (defn init
   {:dev/after-load true}
   []
-  (dispatch-sync [:initialize-db])
+  (db/default-app-db)
   (dispatch-sync [:set-version version])
   (start))
