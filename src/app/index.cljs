@@ -16,6 +16,7 @@
    [shadow.expo :as expo]
 
    [app.views :as views]
+   [app.components :as c]
    [app.handlers]
    [app.subscriptions]))
 
@@ -33,21 +34,21 @@
 (def push-ups
   {:name "Push ups"
    :description "Hold arms in good way and push in the up direction"
-   :pre-activity [{:title "Get in the position"
+   :pre-activity [{:name "Get in the position"
                    :image "https://www.memecreator.org/static/images/memes/4789102.jpg"}]
-   :activities [{:title "Push down"
+   :activities [{:name "Push down"
                  :duration 2000
                  :image "https://www.wikihow.com/images/thumb/5/53/Do-a-Push-Up-Step-15-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-15-Version-3.jpg"}
-                {:title "Push up"
+                {:name "Push up"
                  :image "https://www.wikihow.com/images/thumb/9/98/Do-a-Push-Up-Step-13-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-13-Version-3.jpg"
                  :duration 1000}]
-   :post-activity [{:title "Nice work! Go eat a cake"
+   :post-activity [{:name "Nice work! Go eat a cake"
                     :image "https://memegenerator.net/img/instances/45717809.jpg"}]})
 
 (def jumping-jacks
   {:name "Jumping Jacks"
    :description "Jump as many times as you can"
-   :activities [{:title "Jump as much as you can in the time limit, also do some jacks."
+   :activities [{:name "Jump as much as you can in the time limit, also do some jacks."
                  :duration 100000000
 
                  :image "https://media1.tenor.com/images/1c91aac996db1dec02eac2ddbd86ad30/tenor.gif"}]})
@@ -73,48 +74,48 @@
    :description "do this or you won't sleep"
    :activities [{:name "Brush Teeth"
                  :description "Hold brush and hit teeth with it"
-                 :pre-activity [{:title "Get in the position"
+                 :pre-activity [{:name "Get in the position"
                                  :duration 3000}]
-                 :activities [{:title "brush upper left"
+                 :activities [{:name "brush upper left"
                                :duration 30000}
-                              {:title "brush upper right"
+                              {:name "brush upper right"
                                :duration 30000}
-                              {:title "brush lower left"
+                              {:name "brush lower left"
                                :duration 30000}
-                              {:title "brush lower right"
+                              {:name "brush lower right"
                                :duration 30000}]
-                 :post-activity [{:title "Rinse mouth"}]}
+                 :post-activity [{:name "Rinse mouth"}]}
                 {:name "shower"
                  :description "get water on you"
-                 :activities [{:title "have shower"}]}
+                 :activities [{:name "have shower"}]}
                 {:name "bed"
                  :description "get into bed and close eyes"
-                 :activities [{:title "go to sleep"}]}]})
+                 :activities [{:name "go to sleep"}]}]})
 
 (defn mins->millis
   [min]
   (* min 60 1000))
 
 (def chores
-  [{:title "Hoover"
+  [{:name "Hoover"
     :duration (mins->millis 15)}
-   {:title "Sort through files (post/paperwork etc)"
+   {:name "Sort through files (post/paperwork etc)"
     :duration (mins->millis 5)}
-   {:title "Clean up rubbish"
+   {:name "Clean up rubbish"
     :duration (mins->millis 10)}
-   {:title "Put on a wash"
+   {:name "Put on a wash"
     :duration (mins->millis 5)}
-   {:title "Put Clothes Away"
+   {:name "Put Clothes Away"
     :duration (mins->millis 10)}
-   {:title "Do the dusting"
+   {:name "Do the dusting"
     :duration (mins->millis 15)}
-   {:title "Wipe the surfaces"
+   {:name "Wipe the surfaces"
     :duration (mins->millis 10)}
-   {:title "Change the bedclothes"
+   {:name "Change the bedclothes"
     :duration (mins->millis 10)}
-   {:title "Clean the bathroom"
+   {:name "Clean the bathroom"
     :duration (mins->millis 30)}
-   {:title "Clean the kitchen"
+   {:name "Clean the kitchen"
     :duration (mins->millis 20)}])
 
 (def random-chores
@@ -159,13 +160,19 @@
            :activities activities
            :total-time total-time)))
 
-(defn screen-home [props]
-  (let [routines (mapv gen-routine [my-activity
-                                    jacks
-                                    random-chores
-                                    lazy])]
-    [views/routines props routines]))
+(defn screen-add-routine [_props]
+  [:> c/AddRoutine {:handleSubmit #(rf/dispatch [:add-routine %])}])
 
+(defn screen-home [{:keys [navigation] :as props}]
+  (let [saved-routines @(rf/subscribe [:state [:my-routines]])
+        routines (mapv gen-routine (concat
+                                    saved-routines
+                                    [my-activity
+                                     random-chores
+                                     lazy]))]
+    [:<>
+     [:> c/AddRoutineButton {:handleClick #(rf/dispatch [:navigate navigation "AddRoutine"])}]
+     [views/routines props routines]]))
 
 (defn screen-main [props]
   (let [{:keys [name]} (edn/read-string (.-props (.-params ^js (:route props))))
@@ -183,8 +190,7 @@
   (let [!route-name-ref (clojure.core/atom {})
         !navigation-ref (clojure.core/atom {})]
     [:> AppearanceProvider
-     (let [theme (keyword (useColorScheme))
-           page @(rf/subscribe [:page])
+     (let [page @(rf/subscribe [:page])
            routine? (fn [page] (= "Routine" page))
            routine (when (routine? (:name page))
                      (:props page))]
@@ -219,6 +225,8 @@
          [:> (navigator)
           (screen {:name "Home"
                    :component (r/reactify-component screen-home)})
+          (screen {:name "AddRoutine"
+                   :component (r/reactify-component screen-add-routine)})
           (screen {:name "Routine"
                    :options {:title (or (:name routine) "Routine")}
                    :component (r/reactify-component screen-main)})]]])]))

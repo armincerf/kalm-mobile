@@ -16,7 +16,7 @@
                           Heading]]
    ["react-native" :as ReactNative]
 
-   [app.components :refer [RoutineList]]
+   [app.components :refer [RoutineList] :as c]
 
    [applied-science.js-interop :as j]))
 
@@ -67,7 +67,7 @@
 
 (defn activity-view
   ([activity] (activity-view activity false))
-  ([{:keys [title subtitle image cycle-idx total-cycles] :as activity} preview?]
+  ([{:keys [name subtitle description image cycle-idx total-cycles] :as activity} preview?]
    [:> Box
     {:bg "white"
      :m 5
@@ -77,7 +77,7 @@
       [countdown-display activity preview?])
     (when image
       [:> Image {:source {:uri image}
-                 :alt (or title "Activity")
+                 :alt (or name "Activity")
                  :resizeMode "stretch"
                  :height 250}])
     (when (and cycle-idx (> cycle-idx 1) total-cycles)
@@ -86,8 +86,8 @@
      [:> Heading
       {:size ["md" "lg" "md"]
        :noOfLines 2}
-      title
-      subtitle]]]))
+      name]
+     [:> Text (or subtitle description)]]]))
 
 (defn routine-view
   [{:keys [activities]}]
@@ -95,7 +95,7 @@
     (when (seq sectioned-activities)
       [:> SectionList
        {:sections [{:title "Section" :data sectioned-activities}]
-        :keyExtractor (fn [^js activity] (str (j/get activity :title) (or (j/get activity :cycle-idx) 0)))
+        :keyExtractor (fn [^js activity] (str (j/get activity :name) (or (j/get activity :cycle-idx) 0)))
         :renderItem #(r/as-element (activity-view (js->clj (.-item %) :keywordize-keys true) true))}])))
 
 (defn no-duration-button
@@ -174,12 +174,15 @@
                                  {:title (or k "No Type") :data v})
                                (group-by :type routines))]
     [:<>
-     [:> Box {:bg "white"}
-      [:> Heading "Your routines!"]]
-     [:> RoutineList
-      {:data grouped-routines
-       :handlePress
-       (fn [^js a]
-         (rf/dispatch
-          [:navigate navigation "Routine"
-           (js->clj a :keywordize-keys true)]))}]]))
+     [:> Box {:bg "white"
+              :p 4}
+
+      [:> Heading
+       "Your routines!"]
+      [:> RoutineList
+       {:data grouped-routines
+        :handlePress
+        (fn [^js a]
+          (rf/dispatch
+           [:navigate navigation "Routine"
+            (js->clj a :keywordize-keys true)]))}]]]))

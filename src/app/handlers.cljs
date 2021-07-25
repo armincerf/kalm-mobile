@@ -113,6 +113,20 @@
      "re-frame: ignoring bad :dispatch-later value:" effect)
     (.set timeout key #(rf/dispatch dispatch) ms)))
 
+(defn add-routine
+  [{:keys [db]} [_ form-data]]
+  (let [data (js->clj form-data :keywordize-keys true)
+        routine {:name (:name data)
+                 :type "My Routines"
+                 :activities (mapv (fn [{:keys [duration]
+                                         :as activity}]
+                                     (assoc activity
+                                            :duration
+                                            (* 1000 duration)))
+                                   [data])}]
+    (def data data)
+    {:db (update-in db [:state :my-routines] conj routine)}))
+
 (defn navigate
   [{:keys [db]} [_ navigation route props]]
   {:fx [[:navigate! [navigation route props]]]
@@ -143,3 +157,4 @@
 (rf/reg-event-fx :resume [base-interceptors] resume)
 (rf/reg-event-fx :stop [base-interceptors] stop)
 (rf/reg-event-fx :navigate [base-interceptors] navigate)
+(rf/reg-event-fx :add-routine [base-interceptors] add-routine)
