@@ -27,11 +27,6 @@
       tailwind-rn
       (js->clj :keywordize-keys true)))
 
-;; must use defonce and must refresh full app so metro can fill these in
-;; at live-reload time `require` does not exist and will cause errors
-;; must use path relative to :output-dir
-(defonce splash-img (js/require "../assets/shadow-cljs.png"))
-
 (def push-ups
   {:name "Push ups"
    :description "Hold arms in good way and push in the up direction"
