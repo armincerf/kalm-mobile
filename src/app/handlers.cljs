@@ -19,7 +19,8 @@
    :before (fn [context]
              context)
    :after (fn [context]
-            (when-let [value (get-in context [:effects :db])]
+            (when-let [value (get-in context
+                                     [:effects :db :persisted-state])]
               (store-key "@db" (prn-str value)))
             context)))
 
@@ -36,8 +37,8 @@
 
 (defn resume-routine
   [{:keys [db]} [_ id]]
-  (let [idx (inc (get-in db [:state id :current-idx]))
-        routine (get-in db [:state id :current-routine])]
+  (let [idx (inc (get-in db [:persisted-state id :current-idx]))
+        routine (get-in db [:persisted-state id :current-routine])]
     (if (and idx routine)
       {:fx [[:dispatch [:start-routine routine idx]]]}
       (rf/console :error "No routine to resume" id idx routine))))
@@ -48,15 +49,15 @@
         routine-id (:name routine)
         activity (get activities idx)]
     {:db (-> db
-             (assoc-in [:state routine-id :current-idx] idx)
-             (assoc-in [:state routine-id :current-routine] routine)
-             (assoc-in [:state routine-id :current-activity] activity)
-             (assoc-in [:state routine-id :time-remaining] (:duration activity))
-             (assoc-in [:state routine-id :prev-activity]
+             (assoc-in [:persisted-state routine-id :current-idx] idx)
+             (assoc-in [:persisted-state routine-id :current-routine] routine)
+             (assoc-in [:persisted-state routine-id :current-activity] activity)
+             (assoc-in [:persisted-state routine-id :time-remaining] (:duration activity))
+             (assoc-in [:persisted-state routine-id :prev-activity]
                        (when (and activity
                                   (pos? idx))
                          (get activities (dec idx))))
-             (assoc-in [:state routine-id :next-activity]
+             (assoc-in [:persisted-state routine-id :next-activity]
                        (when-let [next (get activities (inc idx))]
                          next)))
      :fx [(when-let [duration (:duration activity)]
@@ -84,22 +85,22 @@
   [{:keys [db]} [_ key]]
   {:fx [[:timeout-pause key]
         [:dispatch [:save-time-left key]]]
-   :db (assoc-in db [:state key :timeout-paused?] true)})
+   :db (assoc-in db [:persisted-state key :timeout-paused?] true)})
 
 (defn save-time-left
   [{:keys [db]} [_ key]]
-  {:db (assoc-in db [:state key :time-remaining]
+  {:db (assoc-in db [:persisted-state key :time-remaining]
                  (.remaining timeout key))})
 
 (defn resume
   [{:keys [db]} [_ key]]
   {:fx [[:timeout-resume key]]
-   :db (assoc-in db [:state key :timeout-paused?] nil)})
+   :db (assoc-in db [:persisted-state key :timeout-paused?] nil)})
 
 (defn stop
   [{:keys [db]} [_ key]]
   {:fx [[:timeout-clear key]]
-   :db (update db :state dissoc key)})
+   :db (update db :persisted-state dissoc key)})
 
 
 (rf/reg-fx
@@ -139,7 +140,7 @@
                                             :duration
                                             (* 1000 duration)))
                                    [data])}]
-    {:db (update-in db [:state :my-routines] conj routine)
+    {:db (update-in db [:persisted-state :my-routines] conj routine)
      :fx [[:navigate! [(:navigation db) "Home"]]]}))
 
 (defn navigate
@@ -175,4 +176,4 @@
 (rf/reg-event-fx :navigate [base-interceptors] navigate)
 (rf/reg-event-fx :add-routine [base-interceptors] add-routine)
 
-(rf/reg-event-db :wipe-db [base-interceptors] (fn [_ _] {}))
+(rf/reg-event-db :wipe-db [base-interceptors] (fn [_ _] {:persisted-state {}}))

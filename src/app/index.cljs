@@ -160,7 +160,7 @@
   [:> c/AddRoutine {:handleSubmit #(rf/dispatch [:add-routine %])}])
 
 (defn screen-home [{:keys [navigation] :as props}]
-  (let [saved-routines @(rf/subscribe [:state [:my-routines]])
+  (let [saved-routines @(rf/subscribe [:persisted-state [:my-routines]])
         routines (mapv gen-routine (concat
                                     saved-routines
                                     [my-activity
@@ -172,7 +172,7 @@
 
 (defn screen-main [props]
   (let [{:keys [name]} (edn/read-string (.-props (.-params ^js (:route props))))
-        current-activity @(rf/subscribe [:state [name :current-activity]])
+        current-activity @(rf/subscribe [:persisted-state [name :current-activity]])
         running? (not (empty? current-activity))]
     [views/routine-player props current-activity running?]))
 

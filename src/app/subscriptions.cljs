@@ -11,6 +11,11 @@
    (get-in db (cons :state path))))
 
 (rf/reg-sub
+ :persisted-state
+ (fn [db [_ path]]
+   (get-in db (cons :persisted-state path))))
+
+(rf/reg-sub
  :page
  (fn [db _]
    (:current-page db)))
@@ -20,7 +25,7 @@
  (fn [db [_ name]]
    (let [id (or name (get-in db [:current-page :props :name]))]
      (some-> db
-             :state
+             :persisted-state
              (get id)
              :timeout-paused?))))
 
@@ -29,6 +34,6 @@
  (fn [db [_ name]]
    (let [id (or name (get-in db [:current-page :props :name]))]
      (some-> db
-             :state
+             :persisted-state
              (get id)
              :time-remaining))))

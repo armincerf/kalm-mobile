@@ -104,7 +104,7 @@
    {:size "sm"
     :m 3
     :on-press #(rf/dispatch [:resume-routine id])}
-   (if @(rf/subscribe [:state [id :next-activity]])
+   (if @(rf/subscribe [:persisted-state [id :next-activity]])
      "Next Step"
      "Finish")])
 
@@ -142,7 +142,7 @@
            (when running?
              (let [paused? @(rf/subscribe [:paused? name])]
                [:<>
-                (when @(rf/subscribe [:state [id :next-activity]])
+                (when @(rf/subscribe [:persisted-state [id :next-activity]])
                   [:> Button
                    {:size "sm"
                     :m 3
@@ -182,7 +182,9 @@
                   :colorScheme "secondary"
                   :m 4} "Wipe DB"]
       [:> Heading
-       "Your routines!"]
+       {:py 2}
+       "Routines:"]
+
       [:> RoutineList
        {:data grouped-routines
         :handlePress
