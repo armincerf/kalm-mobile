@@ -22,6 +22,7 @@
         "native-base": "^3.0.6",
         "react": "16.13.1",
         "react-dom": "16.13.1",
+        "react-hook-form": "^7.12.0",
         "react-native": "https://github.com/expo/react-native/archive/sdk-42.0.0.tar.gz",
         "react-native-appearance": "~0.3.3",
         "react-native-countdown-circle-timer": "^2.5.3",
@@ -41,11 +42,11 @@
     },
     "devDependencies": {
         "@expo/webpack-config": "^0.13.1",
-        "@types/react": "~16.9.35",
-        "@types/react-native": "~0.63.2",
+        "@types/react": "^17.0.15",
+        "@types/react-native": "^0.64.12",
         "babel-preset-expo": "8.4.0",
         "shadow-cljs": "^2.15.1",
-        "typescript": "~4.0.0"
+        "typescript": "^4.3.5"
     },
     "private": true
 }

@@ -132,14 +132,23 @@
 (defn add-routine
   [{:keys [db]} [_ form-data]]
   (let [data (js->clj form-data :keywordize-keys true)
-        routine {:name (:name data)
+        parse-routines
+        (fn [routines]
+          (mapv
+           (fn process-routine
+             [{:keys [duration] :as routine}]
+             (let [{:keys [hours minutes seconds]} duration
+                   parse (fn [t] (if (seq (str t)) (long t) 0))
+                   hourSecs (* (parse hours) 3600)
+                   minSecs (* (parse minutes) 60)
+                   processed-duration (* (+ (parse seconds)
+                                            minSecs hourSecs)
+                                         1000)]
+               (assoc routine :duration processed-duration)))
+           routines))
+        routine {:name (:routineName data)
                  :type "My Routines"
-                 :activities (mapv (fn [{:keys [duration]
-                                         :as activity}]
-                                     (assoc activity
-                                            :duration
-                                            (* 1000 duration)))
-                                   [data])}]
+                 :activities (parse-routines (:routines data))}]
     {:db (update-in db [:persisted-state :my-routines] conj routine)
      :fx [[:navigate! [(:navigation db) "Home"]]]}))
 

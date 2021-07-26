@@ -7,6 +7,6 @@
 
 (def RoutineList (.-default (js/require "../src/stories/RoutineList.jsx")))
 
-(def AddRoutine (.-default (js/require "../src/stories/AddRoutine.jsx")))
+(def AddRoutine (.-default (js/require "../src/stories/AddRoutines.tsx")))
 
 (def AddRoutineButton (.-default (js/require "../src/stories/AddRoutineButton.jsx")))
