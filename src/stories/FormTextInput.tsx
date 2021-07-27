@@ -1,11 +1,11 @@
 import PropTypes from "prop-types";
-import React from "react";
+import React, { useEffect } from "react";
 import { useController } from "react-hook-form";
 
 import { TextInput } from "./Input";
 
 const ControlledInput = React.forwardRef((props: any, forwardedRef) => {
-  const { control, formState: { errors }, name, rules, defaultValue = "", ...inputProps } = props;
+  const { control, reset, formState: { errors }, name, rules, defaultValue = "", ...inputProps } = props;
   const { field } = useController({ name, control, rules, defaultValue });
 
   return (

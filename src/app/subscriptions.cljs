@@ -1,6 +1,5 @@
 (ns app.subscriptions
-  (:require [re-frame.core :as rf]
-            ["react-native-appearance" :refer [Appearance]]))
+  (:require [re-frame.core :as rf]))
 
 (defn version [db _] (:version db))
 (rf/reg-sub :version version)

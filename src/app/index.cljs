@@ -2,12 +2,11 @@
   (:require
    ["@react-navigation/native" :as nav]
    ["@react-navigation/stack" :as rn-stack]
-   ["react-native-appearance" :refer [AppearanceProvider
-                                      useColorScheme]]
    ["expo-constants" :as expo-constants]
    ["react-native" :as rn]
    ["tailwind-rn" :default tailwind-rn]
    ["native-base" :refer [NativeBaseProvider]]
+   ["react-native-portalize" :refer [Host]]
 
    [clojure.edn :as edn]
    [applied-science.js-interop :as j]
@@ -134,7 +133,7 @@
                 activity (if activity?
                            props
                            (:activity props))
-                activities (if (:duration props)
+                activities (if (some? (:duration props))
                              [props]
                              (:activities activity))
                 cycle-count (:cycle-count props)]
@@ -157,7 +156,8 @@
            :total-time total-time)))
 
 (defn screen-add-routine [_props]
-  [:> c/AddRoutine {:handleSubmit #(rf/dispatch [:add-routine %])}])
+  (let [routines @(rf/subscribe [:persisted-state [:my-routines]])]
+    [:> c/AddRoutine {:handleSubmit #(rf/dispatch [:add-routine %])}]))
 
 (defn screen-home [{:keys [navigation] :as props}]
   (let [saved-routines @(rf/subscribe [:persisted-state [:my-routines]])
@@ -185,47 +185,47 @@
 (defn root []
   (let [!route-name-ref (clojure.core/atom {})
         !navigation-ref (clojure.core/atom {})]
-    [:> AppearanceProvider
-     (let [page @(rf/subscribe [:page])
-           routine? (fn [page] (= "Routine" page))
-           routine (when (routine? (:name page))
-                     (:props page))]
-       [:> NativeBaseProvider
-        [:> nav/NavigationContainer
-         {:ref (fn [el] (reset! !navigation-ref el))
-          :on-ready (fn []
-                      (swap! !route-name-ref merge
-                             {:current (-> @!navigation-ref
-                                           (j/call :getCurrentRoute)
-                                           (j/get :name))}))
-          :on-state-change (fn []
-                             (let [prev-route-name (-> @!route-name-ref :current)
-                                   current-route-name (-> @!navigation-ref
-                                                          (j/call :getCurrentRoute)
-                                                          (j/get :name))]
-                               (when (not= prev-route-name current-route-name)
-                                 ;; This is where you can do side effecty things like analytics
-                                 (when (routine? current-route-name)
-                                   (let [id (-> @!navigation-ref
-                                                (j/call :getCurrentRoute)
-                                                (j/get-in [:params :props])
-                                                (edn/read-string)
-                                                :name)]
-                                     (rf/dispatch [:save-time-left id])))
-                                 (when (routine? (:name page))
-                                   (let [id (-> page :props :name)]
-                                     (rf/dispatch [:save-time-left id])))
-                                 (rf/dispatch [:set-state [:route] (str "New screen encountered " current-route-name)]))
-                               (swap! !route-name-ref merge {:current current-route-name})))}
-
+    (let [page @(rf/subscribe [:page])
+          routine? (fn [page] (= "Routine" page))
+          routine (when (routine? (:name page))
+                    (:props page))]
+      [:> NativeBaseProvider
+       [:> nav/NavigationContainer
+        {:ref (fn [el] (reset! !navigation-ref el))
+         :on-ready (fn []
+                     (swap! !route-name-ref merge
+                            {:current (-> @!navigation-ref
+                                          (j/call :getCurrentRoute)
+                                          (j/get :name))}))
+         :on-state-change (fn []
+                            (let [prev-route-name (-> @!route-name-ref :current)
+                                  current-route-name (-> @!navigation-ref
+                                                         (j/call :getCurrentRoute)
+                                                         (j/get :name))]
+                              (when (not= prev-route-name current-route-name)
+                                ;; This is where you can do side effecty things like analytics
+                                (when (routine? current-route-name)
+                                  (let [id (-> @!navigation-ref
+                                               (j/call :getCurrentRoute)
+                                               (j/get-in [:params :props])
+                                               (edn/read-string)
+                                               :name)]
+                                    (rf/dispatch [:save-time-left id])))
+                                (when (routine? (:name page))
+                                  (let [id (-> page :props :name)]
+                                    (rf/dispatch [:save-time-left id])))
+                                (rf/dispatch [:set-state [:route] (str "New screen encountered " current-route-name)]))
+                              (swap! !route-name-ref merge {:current current-route-name})))}
+        [:> Host
          [:> (navigator)
           (screen {:name "Home"
                    :component (r/reactify-component screen-home)})
           (screen {:name "AddRoutine"
                    :component (r/reactify-component screen-add-routine)})
+
           (screen {:name "Routine"
                    :options {:title (or (:name routine) "Routine")}
-                   :component (r/reactify-component screen-main)})]]])]))
+                   :component (r/reactify-component screen-main)})]]]])))
 
 (defn start
   []

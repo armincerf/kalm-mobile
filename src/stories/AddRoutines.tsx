@@ -1,8 +1,9 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Button, HStack, Box } from "native-base";
 import AddRoutine from "./AddRoutine";
 import { FormTextInput } from "./FormTextInput";
+import { Portal } from "react-native-portalize";
 import {
   Text,
   View,
@@ -17,7 +18,7 @@ import Animated from "react-native-reanimated";
 import SwipeableItem, { UnderlayParams } from "react-native-swipeable-item";
 // this is based on react-native-draggable-flatlist with some modifications to fix errors and improve performance
 import DraggableFlatList, { RenderItemParams } from "./draggable-list";
-import { G } from "react-native-svg";
+import { Modalize } from "react-native-modalize";
 
 const { multiply, sub } = Animated;
 const OVERSWIPE_DIST = 20;
@@ -49,23 +50,31 @@ type FormValues = {
   routines: Item[];
 };
 
-export default ({ handleSubmit }) => {
-  const defaultRoutine = (i: number) => {
-    const backgroundColor = getColor(i);
-    return {
-      name: "Activity",
-      index: i,
-      description: "description",
-      duration: null,
-      key: `key-${backgroundColor}`,
-      backgroundColor,
-      height: 80,
-    };
+const defaultRoutine = (i: number) => {
+  const backgroundColor = getColor(i);
+  return {
+    name: "",
+    index: i,
+    description: "",
+    duration: null,
+    key: `key-${backgroundColor}`,
+    backgroundColor,
+    height: 80,
   };
+};
+
+export default ({ handleSubmit, storedRoutine = { activities: [] } }) => {
+  const initialRoutines: Item[] = storedRoutine.activities.map((r, index) => {
+    const routine = {
+      ...defaultRoutine(index),
+      ...r,
+    };
+    return routine;
+  });
 
   const formMethods = useForm<FormValues>({
     defaultValues: {
-      routines: [defaultRoutine(0), defaultRoutine(1), defaultRoutine(2)],
+      routines: initialRoutines,
     },
   });
 
@@ -75,13 +84,8 @@ export default ({ handleSubmit }) => {
     name: "routines",
   });
 
-  const { fields, append, remove, move } = fieldArrayMethods;
+  const { fields, append, remove, move, update } = fieldArrayMethods;
 
-  const initialFieldData = fields.map((routine, index) => {
-    return {
-      text: routine.name,
-    };
-  });
   const onSubmit = (form) => {
     handleSubmit(form);
   };
@@ -90,16 +94,40 @@ export default ({ handleSubmit }) => {
     console.warn(errors);
   };
 
-  const firstRef = useRef<any>(null);
+  const newRoutine = () => {
+    return defaultRoutine(fields.length || 0);
+  };
 
-  const focusFirst = useCallback(() => firstRef?.current?.focus(), [firstRef]);
+  const addRoutine = () => {
+    modalizeRef.current?.open();
+    if (!editModalState) {
+      const routine = newRoutine();
+      setEditModalState(routine);
+      console.log("s", editModalState, routine);
+    }
+  };
 
-  const appendRoutine = () => {
-    console.log("open create view");
-    append(defaultRoutine(fields.length));
+  const resetForm = () => {
+    setEditModalState(null);
+    modalizeRef.current?.close();
+  };
+
+  const updateRoutine = () => {
+    const formRoutine = formMethods.getValues(
+      `routines.${editModalState.index}`
+    );
+    update(editModalState.index, { ...editModalState, ...formRoutine });
+    modalizeRef.current?.close();
+    resetForm();
   };
 
   const itemRefs = new Map();
+  const [editModalState, setEditModalState] = useState(null);
+  const modalizeRef = useRef<Modalize>(null);
+  const editItem = (item) => {
+    modalizeRef.current?.open();
+    setEditModalState(item);
+  };
 
   const deleteItem = (item) => {
     // Animate list to close gap when item is deleted
@@ -120,6 +148,7 @@ export default ({ handleSubmit }) => {
       </TouchableOpacity>
     </Animated.View>
   );
+
   const renderItem = ({ item, index, drag }: RenderItemParams<Item>) => {
     const newItem: Item = { ...item, index: index };
     return (
@@ -132,7 +161,6 @@ export default ({ handleSubmit }) => {
           }
         }}
         overSwipe={50}
-        
         renderUnderlayLeft={renderUnderlayLeft}
         snapPointsLeft={[50, 100]}
       >
@@ -146,7 +174,7 @@ export default ({ handleSubmit }) => {
             <Text>dragme</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={(e) => console.log("press", index, item)}>
+          <TouchableOpacity onPress={(e) => editItem(newItem)}>
             <Text style={styles.text}>{item.name}</Text>
           </TouchableOpacity>
         </Box>
@@ -155,14 +183,39 @@ export default ({ handleSubmit }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={{
+        flex: 1,
+        marginTop: 20,
+        marginBottom: 40,
+        borderRadius: 3,
+      }}
+    >
+      <Portal>
+        <Modalize ref={modalizeRef}>
+          <Box m={4}>
+            {editModalState ? (
+              <AddRoutine
+                {...formMethods}
+                field={editModalState}
+                index={editModalState.index}
+              />
+            ) : (
+              <Text>Error</Text>
+            )}
+            <Button onPress={updateRoutine} m={2}>
+              Save
+            </Button>
+          </Box>
+        </Modalize>
+      </Portal>
       <Box m={2}>
         <FormTextInput
           {...formMethods}
           name="routineName"
           label="Routine Name"
           rules={{ required: "Routine Name is required!" }}
-          onSubmitEditing={focusFirst}
+          onSubmitEditing={addRoutine}
           returnKeyType="next"
         />
         <Text style={styles.activitiesText}>Activities:</Text>
@@ -175,8 +228,8 @@ export default ({ handleSubmit }) => {
         onDragEnd={({ from, to }) => move(from, to)}
         activationDistance={20}
       />
-      <Button onPress={appendRoutine} m={2}>
-        Add step2
+      <Button onPress={addRoutine} m={2}>
+        Add Step
       </Button>
       <Button m={2} onPress={formMethods.handleSubmit(onSubmit, onErrors)}>
         Submit
@@ -186,11 +239,6 @@ export default ({ handleSubmit }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    marginTop: 20,
-    marginBottom: 40,
-  },
   row: {
     flexDirection: "row",
     flex: 1,

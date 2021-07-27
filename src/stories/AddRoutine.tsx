@@ -15,30 +15,18 @@ const AddRoutine = ({ field, index, ...props }) => {
     () => descriptionRef?.current?.focus(),
     [descriptionRef]
   );
-  const isFirst = index === 0;
-  console.log("add", field);
+
   return (
     <View key={field.id} width="90%">
-      {isFirst ? (
-        <FormTextInput
-          {...props}
-          name={`routines.${index}.name`}
-          label="Name"
-          ref={props.firstRef}
-          rules={{ required: "Name is required!" }}
-          onSubmitEditing={focusDescription}
-          returnKeyType="next"
-        />
-      ) : (
-        <FormTextInput
-          {...props}
-          name={`routines.${index}.name`}
-          label="Name"
-          rules={{ required: "Name is required!" }}
-          onSubmitEditing={focusDescription}
-          returnKeyType="next"
-        />
-      )}
+      <FormTextInput
+        {...props}
+        autoFocus={true}
+        name={`routines.${index}.name`}
+        label="Name"
+        rules={{ required: "Name is required!" }}
+        onSubmitEditing={focusDescription}
+        returnKeyType="next"
+      />
 
       <FormTextInput
         {...props}

@@ -134,18 +134,26 @@
   (let [data (js->clj form-data :keywordize-keys true)
         parse-routines
         (fn [routines]
-          (mapv
-           (fn process-routine
-             [{:keys [duration] :as routine}]
-             (let [{:keys [hours minutes seconds]} duration
-                   parse (fn [t] (if (seq (str t)) (long t) 0))
-                   hourSecs (* (parse hours) 3600)
-                   minSecs (* (parse minutes) 60)
-                   processed-duration (* (+ (parse seconds)
-                                            minSecs hourSecs)
-                                         1000)]
-               (assoc routine :duration processed-duration)))
-           routines))
+          (->> routines
+               (remove
+                (fn invalid-routine
+                  [{:keys [name]}]
+                  (nil? name)))
+               (mapv
+                (fn process-routine
+                  [{:keys [duration] :as routine}]
+                  (let [{:keys [hours minutes seconds]} duration
+                        parse (fn [t] (if (seq (str t)) (long t) 0))
+                        hourSecs (* (parse hours) 3600)
+                        minSecs (* (parse minutes) 60)
+                        processed-duration (* (+ (parse seconds)
+                                                 minSecs hourSecs)
+                                              1000)]
+                    (assoc routine
+                           :duration
+                           (if (pos? processed-duration)
+                             processed-duration
+                             false)))))))
         routine {:name (:routineName data)
                  :type "My Routines"
                  :activities (parse-routines (:routines data))}]
