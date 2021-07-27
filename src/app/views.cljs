@@ -176,6 +176,7 @@
     [:<>
      [:> Box {:bg "white"
               :p 4}
+      [text "version = 0.0.3"]
       [:> Button {:onPress #(rf/dispatch [:wipe-db])
                   :variant "outline"
                   :colorScheme "secondary"

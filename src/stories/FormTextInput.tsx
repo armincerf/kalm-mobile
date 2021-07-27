@@ -2,14 +2,14 @@ import PropTypes from "prop-types";
 import React from "react";
 import { useController } from "react-hook-form";
 
-import { Input } from "./Input";
+import { TextInput } from "./Input";
 
 const ControlledInput = React.forwardRef((props: any, forwardedRef) => {
   const { control, formState: { errors }, name, rules, defaultValue = "", ...inputProps } = props;
   const { field } = useController({ name, control, rules, defaultValue });
 
   return (
-    <Input
+    <TextInput
       {...inputProps}
       error={errors[name]?.message}
       onChangeText={field.onChange}
@@ -25,7 +25,7 @@ export const FormTextInput: any = React.forwardRef((props: any, forwardedRef) =>
 
   if (!name) {
     const errorMessage = 'Form field must have a "name" prop!'
-    return <Input {...props} error={errorMessage} editable={false} />;
+    return <TextInput {...props} error={errorMessage} editable={false} />;
   }
 
   return <ControlledInput {...props} ref={forwardedRef} />;
