@@ -7,6 +7,7 @@
    ["tailwind-rn" :default tailwind-rn]
    ["native-base" :refer [NativeBaseProvider]]
    ["react-native-portalize" :refer [Host]]
+   ["react" :refer [useRef]]
 
    [clojure.edn :as edn]
    [applied-science.js-interop :as j]
@@ -155,9 +156,11 @@
            :activities activities
            :total-time total-time)))
 
-(defn screen-add-routine [_props]
+(defn screen-add-routine [_props animated]
   (let [routines @(rf/subscribe [:persisted-state [:my-routines]])]
-    [:> c/AddRoutine {:handleSubmit #(rf/dispatch [:add-routine %])}]))
+    [:> c/AddRoutine {:handleSubmit #(rf/dispatch [:add-routine %])
+                      :animated animated}]))
+
 
 (defn screen-home [{:keys [navigation] :as props}]
   (let [saved-routines @(rf/subscribe [:persisted-state [:my-routines]])
@@ -183,49 +186,57 @@
 (defn screen [props] [:> (-> stack (j/get :Screen)) props])
 
 (defn root []
-  (let [!route-name-ref (clojure.core/atom {})
-        !navigation-ref (clojure.core/atom {})]
-    (let [page @(rf/subscribe [:page])
-          routine? (fn [page] (= "Routine" page))
-          routine (when (routine? (:name page))
-                    (:props page))]
-      [:> NativeBaseProvider
-       [:> nav/NavigationContainer
-        {:ref (fn [el] (reset! !navigation-ref el))
-         :on-ready (fn []
-                     (swap! !route-name-ref merge
-                            {:current (-> @!navigation-ref
-                                          (j/call :getCurrentRoute)
-                                          (j/get :name))}))
-         :on-state-change (fn []
-                            (let [prev-route-name (-> @!route-name-ref :current)
-                                  current-route-name (-> @!navigation-ref
-                                                         (j/call :getCurrentRoute)
-                                                         (j/get :name))]
-                              (when (not= prev-route-name current-route-name)
+  (let [animated (.-current (useRef (c/animated-value. 0)))
+        !route-name-ref (clojure.core/atom {})
+        !navigation-ref (clojure.core/atom {})
+        page @(rf/subscribe [:page])
+        routine? (fn [page] (= "Routine" page))
+        routine (when (routine? (:name page))
+                  (:props page))]
+    [:> NativeBaseProvider
+     [:> nav/NavigationContainer
+      {:ref (fn [el] (reset! !navigation-ref el))
+       :on-ready (fn []
+                   (swap! !route-name-ref merge
+                          {:current (-> @!navigation-ref
+                                        (j/call :getCurrentRoute)
+                                        (j/get :name))}))
+       :on-state-change (fn []
+                          (let [prev-route-name (-> @!route-name-ref :current)
+                                current-route-name (-> @!navigation-ref
+                                                       (j/call :getCurrentRoute)
+                                                       (j/get :name))]
+                            (when (not= prev-route-name current-route-name)
                                 ;; This is where you can do side effecty things like analytics
-                                (when (routine? current-route-name)
-                                  (let [id (-> @!navigation-ref
-                                               (j/call :getCurrentRoute)
-                                               (j/get-in [:params :props])
-                                               (edn/read-string)
-                                               :name)]
-                                    (rf/dispatch [:save-time-left id])))
-                                (when (routine? (:name page))
-                                  (let [id (-> page :props :name)]
-                                    (rf/dispatch [:save-time-left id])))
-                                (rf/dispatch [:set-state [:route] (str "New screen encountered " current-route-name)]))
-                              (swap! !route-name-ref merge {:current current-route-name})))}
-        [:> Host
-         [:> (navigator)
-          (screen {:name "Home"
-                   :component (r/reactify-component screen-home)})
-          (screen {:name "AddRoutine"
-                   :component (r/reactify-component screen-add-routine)})
+                              (when (routine? current-route-name)
+                                (let [id (-> @!navigation-ref
+                                             (j/call :getCurrentRoute)
+                                             (j/get-in [:params :props])
+                                             (edn/read-string)
+                                             :name)]
+                                  (rf/dispatch [:save-time-left id])))
+                              (when (routine? (:name page))
+                                (let [id (-> page :props :name)]
+                                  (rf/dispatch [:save-time-left id])))
+                              (rf/dispatch [:set-state [:route] (str "New screen encountered " current-route-name)]))
+                            (swap! !route-name-ref merge {:current current-route-name})))}
+      [:> Host
+       [:> rn/View {:style {:flex 1 :backgroundColor "#000"}}
+        (let [interpolate (fn [from to] (.interpolate animated #js {:inputRange #js [0 1]
+                                                                    :outputRange #js [from to]}))]
+          [:> c/Layout
+           {:style {:borderRadius (interpolate 0 12)
+                    :transform [{:scale (interpolate 1 0.92)}]
+                    :opacity (interpolate 1 0.75)}}
+           [:> (navigator)
+            (screen {:name "Home"
+                     :component (r/reactify-component screen-home)})
+            (screen {:name "AddRoutine"
+                     :component (r/reactify-component #(screen-add-routine % animated))})
 
-          (screen {:name "Routine"
-                   :options {:title (or (:name routine) "Routine")}
-                   :component (r/reactify-component screen-main)})]]]])))
+            (screen {:name "Routine"
+                     :options {:title (or (:name routine) "Routine")}
+                     :component (r/reactify-component screen-main)})]])]]]]))
 
 (defn start
   []

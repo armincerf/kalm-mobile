@@ -5,13 +5,25 @@ import { useController } from "react-hook-form";
 import { TextInput } from "./Input";
 
 const ControlledInput = React.forwardRef((props: any, forwardedRef) => {
-  const { control, reset, formState: { errors }, name, rules, defaultValue = "", ...inputProps } = props;
-  const { field } = useController({ name, control, rules, defaultValue });
-
+  const {
+    control,
+    reset,
+    formState: { errors },
+    name,
+    rules,
+    defaultValue = "",
+    ...inputProps
+  } = props;
+  const { field, fieldState } = useController({
+    name,
+    control,
+    rules,
+    defaultValue,
+  });
+  console.log(fieldState);
   return (
     <TextInput
       {...inputProps}
-      error={errors[name]?.message}
       onChangeText={field.onChange}
       onBlur={field.onBlur}
       value={field.value}
@@ -20,16 +32,18 @@ const ControlledInput = React.forwardRef((props: any, forwardedRef) => {
   );
 });
 
-export const FormTextInput: any = React.forwardRef((props: any, forwardedRef) => {
-  const { name, ...inputProps } = props;
+export const FormTextInput: any = React.forwardRef(
+  (props: any, forwardedRef) => {
+    const { name, ...inputProps } = props;
 
-  if (!name) {
-    const errorMessage = 'Form field must have a "name" prop!'
-    return <TextInput {...props} error={errorMessage} editable={false} />;
+    if (!name) {
+      const errorMessage = 'Form field must have a "name" prop!';
+      return <TextInput {...props} error={errorMessage} editable={false} />;
+    }
+
+    return <ControlledInput {...props} ref={forwardedRef} />;
   }
-
-  return <ControlledInput {...props} ref={forwardedRef} />;
-});
+);
 
 FormTextInput.displayName = "FormInput";
 ControlledInput.displayName = "ControlledInput";

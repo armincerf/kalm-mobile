@@ -63,7 +63,11 @@ const defaultRoutine = (i: number) => {
   };
 };
 
-export default ({ handleSubmit, storedRoutine = { activities: [] } }) => {
+export default ({
+  handleSubmit,
+  animated,
+  storedRoutine = { activities: [] },
+}) => {
   const initialRoutines: Item[] = storedRoutine.activities.map((r, index) => {
     const routine = {
       ...defaultRoutine(index),
@@ -78,7 +82,9 @@ export default ({ handleSubmit, storedRoutine = { activities: [] } }) => {
     },
   });
 
-  const { control } = formMethods;
+  const { control, formState } = formMethods;
+  const { isDirty, isValid, errors } = formState;
+
   const fieldArrayMethods = useFieldArray({
     control,
     name: "routines",
@@ -86,6 +92,7 @@ export default ({ handleSubmit, storedRoutine = { activities: [] } }) => {
 
   const { fields, append, remove, move, update } = fieldArrayMethods;
 
+  console.log("errors", formState, fields);
   const onSubmit = (form) => {
     handleSubmit(form);
   };
@@ -109,15 +116,17 @@ export default ({ handleSubmit, storedRoutine = { activities: [] } }) => {
 
   const resetForm = () => {
     setEditModalState(null);
-    modalizeRef.current?.close();
+  };
+
+  const formRoutine = () => {
+    if (typeof editModalState?.index === "number") {
+      return formMethods.getValues(`routines.${editModalState.index}`);
+    }
   };
 
   const updateRoutine = () => {
-    const formRoutine = formMethods.getValues(
-      `routines.${editModalState.index}`
-    );
-    update(editModalState.index, { ...editModalState, ...formRoutine });
     modalizeRef.current?.close();
+    update(editModalState.index, { ...editModalState, ...formRoutine() });
     resetForm();
   };
 
@@ -192,8 +201,27 @@ export default ({ handleSubmit, storedRoutine = { activities: [] } }) => {
       }}
     >
       <Portal>
-        <Modalize ref={modalizeRef}>
+        <Modalize ref={modalizeRef} panGestureAnimatedValue={animated}>
           <Box m={4}>
+            <HStack justifyContent="space-between">
+              <Button
+                size="sm"
+                variant="ghost"
+                colorScheme="secondary"
+                onPress={() => modalizeRef.current.close()}
+              >
+                Exit
+              </Button>
+              {console.log(formRoutine())}
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={!formRoutine()?.name}
+                onPress={updateRoutine}
+              >
+                Save
+              </Button>
+            </HStack>
             {editModalState ? (
               <AddRoutine
                 {...formMethods}
@@ -201,11 +229,8 @@ export default ({ handleSubmit, storedRoutine = { activities: [] } }) => {
                 index={editModalState.index}
               />
             ) : (
-              <Text>Error</Text>
+              <Text>Loading...</Text>
             )}
-            <Button onPress={updateRoutine} m={2}>
-              Save
-            </Button>
           </Box>
         </Modalize>
       </Portal>
@@ -220,14 +245,20 @@ export default ({ handleSubmit, storedRoutine = { activities: [] } }) => {
         />
         <Text style={styles.activitiesText}>Activities:</Text>
       </Box>
-      <DraggableFlatList
-        scrollEnabled={true}
-        keyExtractor={(item) => item.key}
-        data={fields}
-        renderItem={renderItem}
-        onDragEnd={({ from, to }) => move(from, to)}
-        activationDistance={20}
-      />
+      {fields.length ? (
+        <DraggableFlatList
+          scrollEnabled={true}
+          keyExtractor={(item) => item.key}
+          data={fields}
+          renderItem={renderItem}
+          onDragEnd={({ from, to }) => move(from, to)}
+          activationDistance={20}
+        />
+      ) : (
+        <Box m={4}>
+          <Text>No activities yet :(</Text>
+        </Box>
+      )}
       <Button onPress={addRoutine} m={2}>
         Add Step
       </Button>
