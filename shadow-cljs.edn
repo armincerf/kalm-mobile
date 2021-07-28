@@ -7,6 +7,12 @@
   {:target :react-native
    :init-fn app.index/init
    :output-dir "build"
+   :dev {:closure-defines
+         {app.handlers/GIPHY
+          #shadow/env "GIPHY_API_KEY_DEV"}}
+   :release {:closure-defines
+             {app.handlers/GIPHY
+              #shadow/env "GIPHY_API_KEY_PROD"}}
    :devtools {:autoload true
               :preloads [devtools.preload
                          shadow.expo.keep-awake]}}}}

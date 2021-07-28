@@ -24,7 +24,7 @@
       ],
       "orientation": "portrait",
       "updates": {
-          "fallbackToCacheTimeout": 0
+          "fallbackToCacheTimeout": 5000
       },
       "assetBundlePatterns": [
           "**/*"

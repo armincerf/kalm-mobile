@@ -16,6 +16,7 @@
                           Heading]]
    ["react-native" :as ReactNative]
 
+   [app.handlers :as handlers]
    [app.components :refer [RoutineList] :as c]
 
    [applied-science.js-interop :as j]))
@@ -108,65 +109,96 @@
      "Next Step"
      "Finish")])
 
+(defn add-random-activity-image
+  [activity index]
+  (when-not (:image activity)
+    (-> (handlers/fetch-image (:name activity))
+        (.then (fn [{:keys [^js body status]}]
+                 (if (= 200 status)
+                   (let [data (js->clj (.-data body))
+                         image
+                         (some-> data
+                                 shuffle
+                                 first
+                                 (get "images")
+                                 (get "downsized_medium")
+                                 (get "url"))]
+                     image)
+                   (prn "error" body))))
+        (.then #(rf/dispatch [:update-activity
+                              (assoc activity :image %) index])))))
+
 (defn routine-player
-  [_ _ _]
-  (let [show-preview? (r/atom false)]
-    (fn [{:keys [route]} current-activity running?]
-      (let [{:keys [name description] :as routine}
-            (edn/read-string (.-props (.-params route)))
-            id name]
-        [:<>
-         [:> Box
-          {:bg "primary.100"
-           :my 10
-           :py 2
-           :px 2
-           :rounded "md"
-           :alignSelf "center"}
-          [:> Heading name]
-          [:> Text description]
-          [:> Button
-           {:size "sm"
-            :m 3
-            :on-press #(swap! show-preview? not)}
-           (if @show-preview? "Hide Preview" "Show Preview")]
-          [:> HStack
-           {:space 1
-            :alignItems "center"}
-           (when-not running?
-             [:> Button
-              {:m 3
-               :size "sm"
-               :on-press #(rf/dispatch [:start-routine routine 0])}
-              "Click to start routine"])
-           (when running?
-             (let [paused? @(rf/subscribe [:paused? name])]
-               [:<>
-                (when @(rf/subscribe [:persisted-state [id :next-activity]])
-                  [:> Button
-                   {:size "sm"
-                    :m 3
-                    :on-press #(rf/dispatch [:resume-routine id])}
-                   "Skip"])
-                [:> Button
-                 {:size "sm"
-                  :m 3
-                  :on-press #(rf/dispatch [(if paused? :resume :pause) id])}
-                 (if paused? "Resume" "Pause")]
-                [:> Button
-                 {:size "sm"
-                  :m 3
-                  :on-press #(rf/dispatch [:stop id])}
-                 "Stop"]]))]
+  [{:keys [route]} _ _]
+  (let [{:keys [name description activities] :as routine}
+        (edn/read-string (.-props (.-params route)))
+        show-preview? (r/atom false)]
+    (r/create-class
+     {:component-did-mount
+      (fn []
+        (doall
+         (map-indexed
+          (fn [idx activity]
+            (add-random-activity-image activity idx))
+          activities)))
+      :reagent-render
+      (fn [_ current-activity running?]
+        (let [id name
+              no-duration?
+              (and current-activity
+                   (not (:duration current-activity)))]
+          [:<>
+           [:> Box
+            {:py 2
+             :px 2
+             :rounded "md"}
+            [:> Heading name]
+            [:> Text description]
+            [:> Button
+             {:size "sm"
+              :m 3
+              :on-press #(swap! show-preview? not)}
+             (if @show-preview? "Hide Preview" "Show Preview")]
+            [:> HStack
+             {:space 1
+              :alignItems "center"}
+             (when-not running?
+               [:> Button
+                {:m 3
+                 :size "sm"
+                 :on-press #(rf/dispatch [:start-routine routine 0])}
+                "Click to start routine"])
+             (when running?
+               (let [paused? @(rf/subscribe [:paused? name])
+                     next-activity?
+                     @(rf/subscribe [:persisted-state [id :next-activity]])]
+                 [:<>
+                  (when (and next-activity? (not no-duration?))
+                    [:> Button
+                     {:size "sm"
+                      :m 3
+                      :on-press #(rf/dispatch [:resume-routine id])}
+                     "Skip"])
+                  (when-not no-duration?
+                    [:> Button
+                     {:size "sm"
+                      :m 3
+                      :on-press #(rf/dispatch [(if paused? :resume :pause) id])}
+                     (if paused? "Resume" "Pause")])
+                  (when (or next-activity? (not no-duration?))
+                    [:> Button
+                     {:size "sm"
+                      :m 3
+                      :on-press #(rf/dispatch [:stop id])}
+                     "Stop"])]))]
 
-          (when (and current-activity
-                     (not (:duration current-activity)))
-            [no-duration-button id])
+            (when no-duration?
+              [no-duration-button id])
 
-          (when current-activity
-            [activity-view current-activity])]
-         (when @show-preview?
-           [routine-view routine])]))))
+            (when current-activity
+              [activity-view current-activity])]
+           (when @show-preview?
+             [routine-view routine])]))})))
 
 (defn routines
   [{:keys [navigation]} routines]
@@ -176,7 +208,7 @@
     [:<>
      [:> Box {:bg "white"
               :p 4}
-      [text "version = 0.0.5"]
+      [text "version = 0.0.6"]
       [:> Button {:onPress #(rf/dispatch [:wipe-db])
                   :variant "outline"
                   :colorScheme "secondary"

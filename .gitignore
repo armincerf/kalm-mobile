@@ -1,4 +1,6 @@
 .expo
+.env
+.envrc
 .DS_Store
 .cpcache
 .lsp

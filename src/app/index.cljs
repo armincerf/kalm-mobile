@@ -17,7 +17,7 @@
 
    [app.views :as views]
    [app.components :as c]
-   [app.handlers]
+   [app.handlers :refer [routine?]]
    [app.subscriptions]
    [app.db :as db]))
 
@@ -190,7 +190,6 @@
         !route-name-ref (clojure.core/atom {})
         !navigation-ref (clojure.core/atom {})
         page @(rf/subscribe [:page])
-        routine? (fn [page] (= "Routine" page))
         routine (when (routine? (:name page))
                   (:props page))]
     [:> NativeBaseProvider
