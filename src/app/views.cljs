@@ -68,7 +68,7 @@
 
 (defn activity-view
   ([activity] (activity-view activity false))
-  ([{:keys [name subtitle description image cycle-idx total-cycles] :as activity} preview?]
+  ([{:keys [name subtitle description image feeling cycle-idx total-cycles] :as activity} preview?]
    [:> Box
     {:bg "white"
      :m 5
@@ -86,7 +86,10 @@
     [:> Center
      [:> Heading
       {:size ["md" "lg" "md"]
+       :isTruncated true
        :noOfLines 2}
+      (when (= "extraPanik" feeling)
+        "You can do this! \n")
       name]
      [:> Text (or subtitle description)]]]))
 

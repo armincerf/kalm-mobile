@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
-import { Button, HStack, Box } from "native-base";
+import { Button, Pressable, HStack, Box, Icon } from "native-base";
 import AddRoutine from "./AddRoutine";
 import { FormTextInput } from "./FormTextInput";
 import { Portal } from "react-native-portalize";
+import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+
 import {
   Text,
   View,
@@ -41,7 +44,6 @@ type Item = {
   description?: string;
   duration?: number;
   key: string;
-  text: string;
   backgroundColor: string;
   height: number;
 };
@@ -82,8 +84,10 @@ export default ({
     },
   });
 
+  const isWeb = Platform.OS === "web";
+
   const { control, formState } = formMethods;
-  const { isDirty, isValid, errors } = formState;
+  const [allowHaptics, setAllowHaptics] = useState(!isWeb);
 
   const fieldArrayMethods = useFieldArray({
     control,
@@ -92,7 +96,6 @@ export default ({
 
   const { fields, append, remove, move, update } = fieldArrayMethods;
 
-  console.log("errors", formState, fields);
   const onSubmit = (form) => {
     handleSubmit(form);
   };
@@ -110,7 +113,6 @@ export default ({
     if (!editModalState) {
       const routine = newRoutine();
       setEditModalState(routine);
-      console.log("s", editModalState, routine);
     }
   };
 
@@ -144,17 +146,43 @@ export default ({
     remove(item.index);
   };
 
+  const SwipeItem = ({ bg, pressFn, iconName }) => {
+    return (
+      <Pressable
+        bg={bg}
+        width={50}
+        justifyContent="center"
+        alignItems={"center"}
+        height="100%"
+        _light={{
+          borderColor: "dark.200",
+          color: "white",
+        }}
+        _dark={{
+          color: "white",
+          borderColor: "dark.600",
+        }}
+        onPress={pressFn}
+      >
+        <Icon color="white" as={<AntDesign name={iconName} />} size="sm" />
+      </Pressable>
+    );
+  };
+
   const renderUnderlayLeft = ({ item, percentOpen }: UnderlayParams<Item>) => (
     <Animated.View
       style={[styles.underlayLeft, { opacity: percentOpen }]} // Fade in on open
     >
-      <TouchableOpacity onPressOut={() => editItem(item)}>
-        <Text style={styles.blue}>{`Edit`}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPressOut={() => deleteItem(item)}>
-        <Text style={styles.red}>{`Delete`}</Text>
-      </TouchableOpacity>
+      <SwipeItem
+        bg="secondary.600"
+        pressFn={() => deleteItem(item)}
+        iconName="delete"
+      />
+      <SwipeItem
+        bg="primary.600"
+        pressFn={() => editItem(item)}
+        iconName="edit"
+      />
     </Animated.View>
   );
 
@@ -180,7 +208,7 @@ export default ({
           ]}
         >
           <TouchableOpacity style={styles.dragHandle} onPressIn={drag}>
-            <Text>dragme</Text>
+            <MaterialCommunityIcons name="drag" size={24} color="white" />
           </TouchableOpacity>
 
           <TouchableOpacity onPress={(e) => editItem(newItem)}>
@@ -212,11 +240,9 @@ export default ({
               >
                 Exit
               </Button>
-              {console.log(formRoutine())}
               <Button
                 size="sm"
                 variant="ghost"
-                disabled={!formRoutine()?.name}
                 onPress={updateRoutine}
               >
                 Save
@@ -248,10 +274,22 @@ export default ({
       {fields.length ? (
         <DraggableFlatList
           scrollEnabled={true}
+          onPlaceholderIndexChange={(index) => {
+            if (0 <= index && allowHaptics) {
+              console.log("placeholder", index);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }
+          }}
           keyExtractor={(item) => item.key}
           data={fields}
           renderItem={renderItem}
-          onDragEnd={({ from, to }) => move(from, to)}
+          onDragEnd={({ from, to }) => {
+            setAllowHaptics(false);
+            move(from, to);
+            if (!isWeb) {
+              setTimeout(() => setAllowHaptics(true), 100);
+            }
+          }}
           activationDistance={20}
         />
       ) : (

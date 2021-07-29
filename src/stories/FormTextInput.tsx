@@ -20,7 +20,6 @@ const ControlledInput = React.forwardRef((props: any, forwardedRef) => {
     rules,
     defaultValue,
   });
-  console.log(fieldState);
   return (
     <TextInput
       {...inputProps}

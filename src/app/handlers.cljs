@@ -152,7 +152,7 @@
                (remove
                 (fn invalid-routine
                   [{:keys [name]}]
-                  (nil? name)))
+                  (empty? name)))
                (mapv
                 (fn process-routine
                   [{:keys [duration] :as routine}]
