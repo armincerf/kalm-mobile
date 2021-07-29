@@ -6,6 +6,7 @@
    ["smart-timeout" :as timeout]
    ["@react-native-async-storage/async-storage" :default AsyncStorage]
    [app.db :as db]
+   [app.components :as c]
    [reagent.core :as r]))
 
 (def debug? ^boolean goog.DEBUG)
@@ -63,7 +64,11 @@
              (assoc-in [:persisted-state routine-id :next-activity]
                        (when-let [next (get activities (inc idx))]
                          next)))
-     :fx [(when-let [duration (:duration activity)]
+     :fx [(when-not (:disableNotifications activity)
+            [:send-notification! {:activity activity
+                                  :routine routine
+                                  :index idx}])
+          (when-let [duration (:duration activity)]
             [:dispatch-later2
              {:ms duration
               :key routine-id
@@ -131,6 +136,11 @@
  :timeout-clear
  (fn [key]
    (timeout-fn key #(.clear timeout %))))
+
+(rf/reg-fx
+ :send-notification!
+ (fn [data]
+   (c/send-notification (clj->js data))))
 
 (defn dispatch-later
   [{:keys [ms dispatch key] :as effect}]

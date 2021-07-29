@@ -8,7 +8,12 @@
       "ios": {
           "bundleIdentifier": "com.armincerf.kalmroutines",
           "buildNumber": "1.0.0",
-          "supportsTablet": true
+          "supportsTablet": true,
+          "infoPlist": {
+              "UIBackgroundModes": [
+                  "remote-notification"
+              ]
+          }
       },
       "android": {
           "package": "com.armincerf.kalm_routines",

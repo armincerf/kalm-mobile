@@ -13,6 +13,11 @@
 
 (def AddRoutineButton (.-default (js/require "../src/stories/AddRoutineButton.jsx")))
 
+(def utils (js/require "../src/stories/utils.js"))
+
+(def register-notifications (.-registerForPushNotificationsAsync utils))
+(def send-notification (.-schedulePushNotification utils))
+
 
 (def Layout (.-Layout (js/require "../src/stories/Layout.jsx")))
 

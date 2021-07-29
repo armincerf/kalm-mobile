@@ -216,6 +216,14 @@
                   :variant "outline"
                   :colorScheme "secondary"
                   :m 4} "Wipe DB"]
+      [:> Button {:onPress c/register-notifications
+                  :variant "outline"
+                  :colorScheme "secondary"
+                  :m 4} "Notifications register"]
+      [:> Button {:onPress c/send-notification
+                  :variant "outline"
+                  :colorScheme "secondary"
+                  :m 4} "Notifications send"]
       [:> Heading
        {:py 2}
        "Routines:"]
