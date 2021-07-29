@@ -28,12 +28,23 @@
               (store-key "@db" (prn-str value)))
             context)))
 
+(def track
+  (rf/->interceptor
+   :id :track
+   :before (fn [context]
+             context)
+   :after (fn [context]
+            (let [[id params] (get-in context [:coeffects :event])]
+              (.track c/analytics "re-frame event" #js {:name (name id)
+                                                        :params (prn-str params)}))
+            context)))
+
 (def base-interceptors
   [(when debug? rf/debug)
+   track
    persist-db])
 
-(defn initialize-db [_ [_ db]]
-  db)
+(defn initialize-db [_ [_ db]] db)
 
 (defn set-state
   [db [_ path value]]
@@ -112,15 +123,14 @@
 
 (defn fetch-image
   [name]
-  (when GIPHY
-    (fetch/get "https://api.giphy.com/v1/gifs/search"
-               {:query-params
-                {:api_key GIPHY
-                 :q name
-                 :limit 25
-                 :offset 0
-                 :rating "g"
-                 :lang "en"}})))
+  (fetch/get "https://api.giphy.com/v1/gifs/search"
+             {:query-params
+              {:api_key GIPHY
+               :q name
+               :limit 25
+               :offset 0
+               :rating "g"
+               :lang "en"}}))
 
 (rf/reg-fx
  :timeout-pause

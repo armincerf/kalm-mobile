@@ -2728,6 +2728,21 @@
   dependencies:
     "@react-types/shared" "^3.2.1"
 
+"@splitbee/core@^0.2.7":
+  version "0.2.7"
+  resolved "https://registry.yarnpkg.com/@splitbee/core/-/core-0.2.7.tgz#8de0a606ceebe371f8fb6a1dc1c4ae96dbfd1c03"
+  integrity sha512-kuLqtJxJmPZoSbe3ob/sogEphCTmu74RMOcy291z810XWD0T0Il0wytlAE6b71s/8KCTSjcCt2kgB3nLf7AKbQ==
+
+"@splitbee/react-native@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@splitbee/react-native/-/react-native-0.2.2.tgz#e00cca63d0330af8436d9e0f8e2eccb7e8d0f8f2"
+  integrity sha512-2xAtdhHRqcbr6PlQoMDk471sZcT+jmflUe3iLkUUV0XE/VChhvlx87NW5TcB4GzjxhmfENkhYLD1J6tdKOKF4Q==
+  dependencies:
+    "@react-native-async-storage/async-storage" "^1.14.0"
+    "@splitbee/core" "^0.2.7"
+    cross-fetch "^3.0.5"
+    tslib "^2.1.0"
+
 "@styled-system/background@^5.1.2":
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/@styled-system/background/-/background-5.1.2.tgz#75c63d06b497ab372b70186c0bf608d62847a2ba"

@@ -217,7 +217,7 @@
                               (when (routine? (:name page))
                                 (let [id (-> page :props :name)]
                                   (rf/dispatch [:save-time-left id])))
-                              (rf/dispatch [:set-state [:route] (str "New screen encountered " current-route-name)]))
+                              (.screen c/analytics current-route-name))
                             (swap! !route-name-ref merge {:current current-route-name})))}
       [:> Host
        [:> rn/View {:style {:flex 1 :backgroundColor "#000"}}
@@ -246,9 +246,17 @@
                  (j/get :manifest)
                  (j/get :version)))
 
+(defonce analytics
+  (do
+    (.init c/analytics "QQKB2W5GHSGT")
+    "done"))
+
 (defn init
   {:dev/after-load true}
   []
   (db/default-app-db)
+  (dispatch-sync [:wipe-db])
+  (when analytics
+    (.identify c/analytics #js {:displayName (c/get-name)}))
   (dispatch-sync [:set-version version])
   (start))

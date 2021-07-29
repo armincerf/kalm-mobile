@@ -114,7 +114,7 @@
 
 (defn add-random-activity-image
   [activity index]
-  (when-not (:image activity)
+  (when (and handlers/GIPHY (not (:image activity)))
     (-> (handlers/fetch-image (:name activity))
         (.then (fn [{:keys [^js body status]}]
                  (if (= 200 status)
@@ -129,7 +129,9 @@
                      image)
                    (prn "error" body))))
         (.then #(rf/dispatch [:update-activity
-                              (assoc activity :image %) index])))))
+                              (assoc activity :image %) index]))
+        (.catch (fn [err] (.track c/analytics "Error fetching image" #js {:key handlers/GIPHY
+                                                                          :err err}))))))
 
 (defn routine-player
   [{:keys [route]} _ _]
@@ -211,7 +213,7 @@
     [:<>
      [:> Box {:bg "white"
               :p 4}
-      [text "version = 0.0.6"]
+      [text "version = 0.0.7"]
       [:> Button {:onPress #(rf/dispatch [:wipe-db])
                   :variant "outline"
                   :colorScheme "secondary"
@@ -220,7 +222,7 @@
                   :variant "outline"
                   :colorScheme "secondary"
                   :m 4} "Notifications register"]
-      [:> Button {:onPress c/send-notification
+      [:> Button {:onPress #(js/setTimeout (fn [] (c/send-notification {:activity {:name "test!!"}})) 3000)
                   :variant "outline"
                   :colorScheme "secondary"
                   :m 4} "Notifications send"]
