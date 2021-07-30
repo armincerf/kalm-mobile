@@ -121,7 +121,6 @@
 
 (defn gen-routine
   [root-activity]
-  (def root-activity root-activity)
   (let [gen-cycles
         (fn [activities cycle-count]
           (for [cycle (range cycle-count)]
@@ -137,7 +136,8 @@
                 activities (if (some? (:duration props))
                              [props]
                              (:activities activity))
-                cycle-count (:cycle-count props)]
+                cycle-count (or (:cycle-count props)
+                                (:cycleCount activity))]
             (concat
              (:pre-activity activity)
              (gen-cycles activities (or cycle-count 1))

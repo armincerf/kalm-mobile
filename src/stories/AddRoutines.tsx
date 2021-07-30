@@ -1,6 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
-import { Button, Pressable, HStack, Box, Icon, FormControl } from "native-base";
+import {
+  Button,
+  Pressable,
+  HStack,
+  Box,
+  Icon,
+  FormControl,
+  Center,
+} from "native-base";
 import AddRoutine from "./AddRoutine";
 import { FormTextInput } from "./FormTextInput";
 import { Portal } from "react-native-portalize";
@@ -48,6 +56,7 @@ type Item = {
   hasNotification?: boolean;
   hasGif?: boolean;
   hasDuration?: boolean;
+  cycleCount?: number;
   hasCustomImage?: boolean;
 };
 
@@ -67,6 +76,7 @@ const defaultRoutine = (i: number) => {
     height: 80,
     hasNotification: true,
     hasGif: true,
+    cycleCount: 1,
   };
 };
 
@@ -220,7 +230,9 @@ export default ({
           <TouchableOpacity style={styles.dragHandle} onPressIn={drag}>
             <MaterialCommunityIcons name="drag" size={24} color="white" />
           </TouchableOpacity>
-
+          {Boolean(item.cycleCount >= 1) && (
+            <Text style={styles.cycles}>{`${item.cycleCount} Cycles`}</Text>
+          )}
           <TouchableOpacity onPress={(e) => editItem(newItem)}>
             <Text style={styles.text}>{item.name}</Text>
           </TouchableOpacity>
@@ -334,6 +346,7 @@ export default ({
 
 const styles = StyleSheet.create({
   row: {
+    position: "relative",
     flexDirection: "row",
     flex: 1,
     alignItems: "center",
@@ -343,6 +356,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "white",
     fontSize: 32,
+  },
+  cycles: {
+    position: "absolute",
+    left: 5,
+    color: "lightgrey",
+    fontSize: 16,
   },
   red: {
     color: "white",

@@ -69,7 +69,6 @@
   ([activity] (activity-view activity false))
   ([{:keys [name subtitle description image feeling cycle-idx total-cycles] :as activity} preview?]
    (let [paused? @(rf/subscribe [:paused?])]
-     (prn "im" image)
      [:> Box
       {:bg "white"
        :m 5
@@ -83,12 +82,13 @@
                                      :alt (or name "Activity")
                                      :resizeMode "stretch"
                                      :height 250}])]
+
           (cond
             (string? image)
             (image-tag image)
-            (and paused? (:still image))
+            paused?
             (image-tag (:still image))
-            (:gif image)
+            (not paused?)
             (image-tag (:gif image)))))
       (when (and cycle-idx (> cycle-idx 1) total-cycles)
         [:> Heading (str "Cycle number " cycle-idx " out of " total-cycles)])

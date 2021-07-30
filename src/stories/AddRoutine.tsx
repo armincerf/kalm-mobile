@@ -21,6 +21,7 @@ import {
 import { FormTextInput } from "./FormTextInput";
 import { FormDurationInput } from "./FormDurationInput";
 import { vibrate, isWeb } from "./utils";
+import InputSpinner from "react-native-input-spinner";
 
 const FeelingPicker = ({ setValue, field, feelingName }) => {
   console.log("render");
@@ -96,6 +97,34 @@ const AddRoutine = ({ field, index, ...props }) => {
       </>
     );
   };
+  const NumberPicker = ({ name, label }) => {
+    return (
+      <>
+        <FormControl.Label>{label}</FormControl.Label>
+        <Controller
+          control={props.control}
+          rules={{
+            required: false,
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <FormControl my={2}>
+              <InputSpinner
+                min={1}
+                colorMin={"#40c5f4"}
+                value={field.value}
+                onBlur={onBlur}
+                skin="modern"
+                onChange={onChange}
+              />
+            </FormControl>
+          )}
+          name={name}
+          defaultValue={field.value}
+        />
+      </>
+    );
+  };
+
   const { control } = props;
   const Selections = () => {
     const data = [
@@ -109,7 +138,7 @@ const AddRoutine = ({ field, index, ...props }) => {
       control,
       name: names,
     });
-    const [notif, gif, image, duration]: boolean[] = values;
+    const [_notif, _gif, /*image,*/ duration]: boolean[] = values;
 
     return (
       <>
@@ -121,13 +150,17 @@ const AddRoutine = ({ field, index, ...props }) => {
             key={name}
           />
         ))}
-        {Boolean(duration || isWeb) && (
+        {Boolean(duration) && (
           <FormDurationInput
             {...props}
             name={durationName}
             label="Duration in seconds"
           />
         )}
+        <NumberPicker
+          name={`routines.${index}.cycleCount`}
+          label={"Number of repetitions"}
+        />
       </>
     );
   };
@@ -151,7 +184,7 @@ const AddRoutine = ({ field, index, ...props }) => {
       <FormTextInput
         {...props}
         name={`routines.${index}.description`}
-        label="Description"
+        label="Description (optional)"
         ref={descriptionRef}
       />
 
