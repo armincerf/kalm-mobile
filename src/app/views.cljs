@@ -26,9 +26,8 @@
 (def text (r/adapt-react-class (.-Text ^js ReactNative)))
 
 (defn countdown-display
-  [{:keys [duration name cycle-idx]} preview?]
-  (let [paused? @(rf/subscribe [:paused?])
-        time-left @(rf/subscribe [:time-left])
+  [{:keys [duration name cycle-idx]} preview? paused?]
+  (let [time-left @(rf/subscribe [:time-left])
         duration (or (and (not preview?) time-left) duration)]
     [:> Center
      [countdown
@@ -69,29 +68,39 @@
 (defn activity-view
   ([activity] (activity-view activity false))
   ([{:keys [name subtitle description image feeling cycle-idx total-cycles] :as activity} preview?]
-   [:> Box
-    {:bg "white"
-     :m 5
-     :shadow 2
-     :rounded "lg"}
-    (when (:duration activity)
-      [countdown-display activity preview?])
-    (when image
-      [:> Image {:source {:uri image}
-                 :alt (or name "Activity")
-                 :resizeMode "stretch"
-                 :height 250}])
-    (when (and cycle-idx (> cycle-idx 1) total-cycles)
-      [:> Heading (str "Cycle number " cycle-idx " out of " total-cycles)])
-    [:> Center
-     [:> Heading
-      {:size ["md" "lg" "md"]
-       :isTruncated true
-       :noOfLines 2}
-      (when (= "extraPanik" feeling)
-        "You can do this! \n")
-      name]
-     [:> Text (or subtitle description)]]]))
+   (let [paused? @(rf/subscribe [:paused?])]
+     (prn "im" image)
+     [:> Box
+      {:bg "white"
+       :m 5
+       :shadow 2
+       :rounded "lg"}
+      (when (:duration activity)
+        [countdown-display activity preview? paused?])
+      (when image
+        (let [image-tag (fn [image]
+                          [:> Image {:source {:uri image}
+                                     :alt (or name "Activity")
+                                     :resizeMode "stretch"
+                                     :height 250}])]
+          (cond
+            (string? image)
+            (image-tag image)
+            (and paused? (:still image))
+            (image-tag (:still image))
+            (:gif image)
+            (image-tag (:gif image)))))
+      (when (and cycle-idx (> cycle-idx 1) total-cycles)
+        [:> Heading (str "Cycle number " cycle-idx " out of " total-cycles)])
+      [:> Center
+       [:> Heading
+        {:size ["md" "lg" "md"]
+         :isTruncated true
+         :noOfLines 2}
+        (when (= "extraPanik" feeling)
+          "You can do this! \n")
+        name]
+       [:> Text (or subtitle description)]]])))
 
 (defn routine-view
   [{:keys [activities]}]
@@ -114,7 +123,7 @@
 
 (defn add-random-activity-image
   [activity index]
-  (when (and handlers/GIPHY (not (:image activity)))
+  (when (and (:hasGif activity) handlers/GIPHY (not (:image activity)))
     (-> (handlers/fetch-image (:name activity))
         (.then (fn [{:keys [^js body status]}]
                  (if (= 200 status)
@@ -123,10 +132,15 @@
                          (some-> data
                                  shuffle
                                  first
-                                 (get "images")
-                                 (get "downsized_medium")
-                                 (get "url"))]
-                     image)
+                                 (get "images"))
+                         gif (some-> image
+                                     (get "downsized_medium")
+                                     (get "url"))
+                         still (some-> image
+                                       (get "480w_still")
+                                       (get "url"))]
+                     {:gif gif
+                      :still still})
                    (prn "error" body))))
         (.then #(rf/dispatch [:update-activity
                               (assoc activity :image %) index]))
@@ -213,7 +227,7 @@
     [:<>
      [:> Box {:bg "white"
               :p 4}
-      [text "version = 0.0.7"]
+      [text "version = 0.0.10"]
       [:> Button {:onPress #(rf/dispatch [:wipe-db])
                   :variant "outline"
                   :colorScheme "secondary"
@@ -222,10 +236,6 @@
                   :variant "outline"
                   :colorScheme "secondary"
                   :m 4} "Notifications register"]
-      [:> Button {:onPress #(js/setTimeout (fn [] (c/send-notification {:activity {:name "test!!"}})) 3000)
-                  :variant "outline"
-                  :colorScheme "secondary"
-                  :m 4} "Notifications send"]
       [:> Heading
        {:py 2}
        "Routines:"]

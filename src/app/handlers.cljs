@@ -5,9 +5,18 @@
    [re-frame.db :as rf-db]
    ["smart-timeout" :as timeout]
    ["@react-native-async-storage/async-storage" :default AsyncStorage]
+   ["expo-notifications" :as Notifications]
    [app.db :as db]
    [app.components :as c]
    [reagent.core :as r]))
+
+(defn log
+  ([message] (log message {}))
+  ([message data]
+   (js/console.log message data)
+   (when-not c/web?
+     (.track c/analytics message (clj->js data)))
+   nil))
 
 (def debug? ^boolean goog.DEBUG)
 
@@ -53,17 +62,20 @@
 (defn resume-routine
   [{:keys [db]} [_ id]]
   (let [idx (inc (get-in db [:persisted-state id :current-idx]))
-        routine (get-in db [:persisted-state id :current-routine])]
+        routine (get-in db [:state id :current-routine])]
     (if (and idx routine)
-      {:fx [[:dispatch [:start-routine routine idx]]]}
+      {:fx [[:notifs/cancel!]
+            [:dispatch [:start-routine routine idx]]]
+       :db (assoc-in db [:persisted-state id :scheduled?] false)}
       (rf/console :error "No routine to resume" id idx routine))))
 
 (defn start-routine
   [{:keys [db]} [_ {:keys [name]} idx]]
-  (let [routine (get-in db [:persisted-state name :current-routine])
+  (let [routine (get-in db [:state name :current-routine])
         activities (vec (:activities routine))
         routine-id (:name routine)
         activity (get activities idx)]
+    (log "start activity" name)
     {:db (-> db
              (assoc-in [:persisted-state routine-id :current-idx] idx)
              (assoc-in [:persisted-state routine-id :current-activity] activity)
@@ -75,10 +87,7 @@
              (assoc-in [:persisted-state routine-id :next-activity]
                        (when-let [next (get activities (inc idx))]
                          next)))
-     :fx [(when-not (:disableNotifications activity)
-            [:send-notification! {:activity activity
-                                  :routine routine
-                                  :index idx}])
+     :fx [[:dispatch [:schedule-notifications! routine-id]]
           (when-let [duration (:duration activity)]
             [:dispatch-later2
              {:ms duration
@@ -98,13 +107,16 @@
   (prn "doing thing" key fn)
   (if (and key (.exists timeout key))
     (fn key)
-    (rf/console :error "bad timeout passed to timeout-fn" key fn)))
+    (rf/console :warn "nil timeout passed to timeout-fn" key fn)))
 
 (defn pause
   [{:keys [db]} [_ key]]
   {:fx [[:timeout-pause key]
-        [:dispatch [:save-time-left key]]]
-   :db (assoc-in db [:persisted-state key :timeout-paused?] true)})
+        [:dispatch [:save-time-left key]]
+        [:notifs/cancel!]]
+   :db (-> db
+           (assoc-in [:persisted-state key :scheduled?] false)
+           (assoc-in [:persisted-state key :timeout-paused?] true))})
 
 (defn save-time-left
   [{:keys [db]} [_ key]]
@@ -113,12 +125,14 @@
 
 (defn resume
   [{:keys [db]} [_ key]]
-  {:fx [[:timeout-resume key]]
+  {:fx [[:timeout-resume key]
+        [:dispatch [:schedule-notifications! key]]]
    :db (assoc-in db [:persisted-state key :timeout-paused?] nil)})
 
 (defn stop
   [{:keys [db]} [_ key]]
-  {:fx [[:timeout-clear key]]
+  {:fx [[:timeout-clear key]
+        [:notifs/cancel!]]
    :db (update db :persisted-state dissoc key)})
 
 (defn fetch-image
@@ -148,9 +162,76 @@
    (timeout-fn key #(.clear timeout %))))
 
 (rf/reg-fx
- :send-notification!
- (fn [data]
-   (c/send-notification (clj->js data))))
+ :notifs/cancel!
+ (fn []
+   (log "cancelling all notifs")
+   (when-not c/web?
+     (.cancelAllScheduledNotificationsAsync Notifications))))
+
+(rf/reg-fx
+ :notifs/schedule!
+ (fn [activities]
+   (when-not c/web?
+     (prn "schedule " (map :name activities))
+     (let [duration (atom 0)
+           done? (atom false)]
+       (doall
+        (map-indexed
+         (fn [idx activity]
+           (let [next-activity (get (vec activities) (inc idx))]
+             (when (:name next-activity)
+               (swap! duration #(+ % (:duration activity)))
+               (let [trigger-time @duration
+                     left (str (/ (:duration next-activity) 1000) " seconds")
+                     message (if-let [next (:name (get (vec activities) (+ 2 idx)))]
+
+                               (rand-nth
+                                [(str "You have " left " until '" next "' begins!")
+                                 "Do it now or I'll show you real panik :<"
+                                 (when-let [feel (:feeling activity)]
+                                   (case feel
+                                     "kalm" (str "This is a nice one! Enjoy!")
+                                     "panik" (str "Don't panik, you got this!")
+                                     "extraPanik" (str "Yeah.. I wouldn't want to do it either...")))])
+                               (str "Come back to the app when you're done!"
+                                    (when (pos? (:duration next-activity))
+                                      (str  " Only"
+                                            left
+                                            " left to go!"))))]
+                 (log "sending" #js [idx (:name next-activity) message " in " (/ trigger-time 1000)] )
+                 (c/send-notification (clj->js (assoc next-activity :message message)) (/ trigger-time 1000))))))
+         activities))))))
+
+(defn take-while+
+  [pred coll]
+  (lazy-seq
+   (when-let [[f & r] (seq coll)]
+     (if (pred f)
+       (cons f (take-while+ pred r))
+       [f]))))
+
+(rf/reg-event-fx
+ :schedule-notifications!
+ [base-interceptors]
+ (fn [{:keys [db]} [_ routine-id]]
+   (prn "sched")
+   (let [idx (get-in db [:persisted-state routine-id :current-idx])
+         activities (get-in db [:state routine-id :current-routine :activities])
+         path [:persisted-state routine-id :scheduled?]]
+     (if (get-in db path)
+       (log "already scheduled" routine-id)
+       ;; only schedule notifications for the next activities in the queue up
+       ;; until there is one without a duration (because that requires manual
+       ;; input)
+       (let [next-without-duration ()
+             to-notify (->> activities
+                            (drop idx)
+                            (remove :disableNotifications)
+                            (take-while+ :duration))]
+         (prn "to nott" to-notify)
+         (when (seq to-notify)
+           {:fx [[:notifs/schedule! to-notify]]
+            :db (assoc-in db path true)}))))))
 
 (defn dispatch-later
   [{:keys [ms dispatch key] :as effect}]
@@ -200,7 +281,7 @@
   [{:keys [db]} [_ navigation route props]]
   (let [db
         (if (routine? route)
-          (assoc-in db [:persisted-state (:name props) :current-routine] props)
+          (assoc-in db [:state (:name props) :current-routine] props)
           db)]
     {:fx [[:navigate! [navigation route props]]]
      :db (assoc db
@@ -210,7 +291,7 @@
 
 (defn update-activity
   [{:keys [db]} [_ activity index]]
-  {:db (update-in db [:persisted-state
+  {:db (update-in db [:state
                       (get-in db [:current-page :props :name])
                       :current-routine
                       :activities

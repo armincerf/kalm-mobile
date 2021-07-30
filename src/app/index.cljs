@@ -220,11 +220,12 @@
                               (.screen c/analytics current-route-name))
                             (swap! !route-name-ref merge {:current current-route-name})))}
       [:> Host
+       ;;black view only visible when modal opens
        [:> rn/View {:style {:flex 1 :backgroundColor "#000"}}
         (let [interpolate (fn [from to] (.interpolate animated #js {:inputRange #js [0 1]
                                                                     :outputRange #js [from to]}))]
           [:> c/Layout
-           {:style {:borderRadius (interpolate 0 12)
+           {:style {:borderRadius (interpolate 0 20)
                     :transform [{:scale (interpolate 1 0.92)}]
                     :opacity (interpolate 1 0.75)}}
            [:> (navigator)
@@ -247,16 +248,17 @@
                  (j/get :version)))
 
 (defonce analytics
-  (do
-    (.init c/analytics "QQKB2W5GHSGT")
-    "done"))
+  (when-not c/web?
+    (do
+      (.init c/analytics "QQKB2W5GHSGT")
+      "done")))
 
 (defn init
   {:dev/after-load true}
   []
   (db/default-app-db)
-  (dispatch-sync [:wipe-db])
   (when analytics
     (.identify c/analytics #js {:displayName (c/get-name)}))
   (dispatch-sync [:set-version version])
+
   (start))

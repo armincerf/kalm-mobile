@@ -4,6 +4,29 @@ import React, { useState, useEffect, useRef } from "react";
 import { Text, View, Button, Platform } from "react-native";
 import * as TaskManager from "expo-task-manager";
 import * as Device from "expo-device";
+import * as Haptics from "expo-haptics";
+
+export const isWeb = Platform.OS === "web";
+
+export const vibrate = (intensity = "medium") => {
+  if (!isWeb) {
+    let hapticIntensity: Haptics.ImpactFeedbackStyle;
+    switch (intensity) {
+      case "light":
+        hapticIntensity = Haptics.ImpactFeedbackStyle.Light;
+        break;
+      case "medium":
+        hapticIntensity = Haptics.ImpactFeedbackStyle.Medium;
+        break;
+      case "hard":
+        hapticIntensity = Haptics.ImpactFeedbackStyle.Heavy;
+        break;
+      default:
+        hapticIntensity = Haptics.ImpactFeedbackStyle.Medium;
+    }
+    Haptics.impactAsync(hapticIntensity);
+  }
+};
 
 const getDeviceType = (device) => {
   switch (device) {
@@ -39,7 +62,6 @@ export const getDeviceInfo = async () => {
       deviceId: Device.modelId,
     },
   };
-  console.log("info=", info);
   return info;
 };
 
@@ -48,48 +70,37 @@ export const getName = () => {
   const device = {
     model: Constants.deviceName || Device.modelName,
     deviceId: Device.modelId,
-  }
+  };
   return `${device.model}, ${device.deviceId} - ${os}`;
 };
 
-const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
-
-TaskManager.defineTask(
-  BACKGROUND_NOTIFICATION_TASK,
-  ({ data, error, executionInfo }) => {
-    alert("Received a notification in the background!");
-    schedulePushNotification();
-  }
-);
-
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: false,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async () => {
+    ({
+      shouldShowAlert: false,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    },
+      console.log("yoyofll"));
+  },
 });
 
-export async function schedulePushNotification(data) {
-  console.log("notif", getDeviceType(await Device.getDeviceTypeAsync()));
-  if (data?.activity && data?.activity?.name) {
+export async function schedulePushNotification(activity, seconds) {
+  if (activity && activity?.name) {
     await Notifications.scheduleNotificationAsync({
       content: {
         _contentAvailable: true,
-        title: data.activity.name,
-        body: data.activity?.description || "1 min left!",
+        title: `Its time to start '${activity.name}'!`,
+        body: activity?.description || activity.message,
         data: { data: "goes here" },
       },
 
-      trigger: null,
+      trigger: { seconds: seconds },
     });
-  } else {
-    console.error("no name in data for notification!", data);
   }
 }
 
 export async function registerForPushNotificationsAsync() {
-  Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
   let token;
   if (Constants.isDevice) {
     const { status: existingStatus } =

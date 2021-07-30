@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
-import { Button, Pressable, HStack, Box, Icon } from "native-base";
+import { Button, Pressable, HStack, Box, Icon, FormControl } from "native-base";
 import AddRoutine from "./AddRoutine";
 import { FormTextInput } from "./FormTextInput";
 import { Portal } from "react-native-portalize";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
-
+import { isWeb, vibrate } from "./utils";
 import {
   Text,
   View,
@@ -46,6 +45,10 @@ type Item = {
   key: string;
   backgroundColor: string;
   height: number;
+  hasNotification?: boolean;
+  hasGif?: boolean;
+  hasDuration?: boolean;
+  hasCustomImage?: boolean;
 };
 
 type FormValues = {
@@ -62,6 +65,8 @@ const defaultRoutine = (i: number) => {
     key: `key-${backgroundColor}`,
     backgroundColor,
     height: 80,
+    hasNotification: true,
+    hasGif: true,
   };
 };
 
@@ -84,11 +89,8 @@ export default ({
     },
   });
 
-  const isWeb = Platform.OS === "web";
-
   const { control, formState } = formMethods;
   const [allowHaptics, setAllowHaptics] = useState(!isWeb);
-
   const fieldArrayMethods = useFieldArray({
     control,
     name: "routines",
@@ -96,12 +98,19 @@ export default ({
 
   const { fields, append, remove, move, update } = fieldArrayMethods;
 
-  const onSubmit = (form) => {
+  const onSubmit = (form: any) => {
     handleSubmit(form);
   };
 
-  const onErrors = (errors) => {
-    console.warn(errors);
+  const [errors, setErrors] = useState({});
+  const nameRef = useRef(null);
+
+  const onErrors = (errors: object) => {
+    const error = Object.values(errors)[0];
+    setErrors(error.message);
+    console.log(error.ref);
+    const ref = error.ref?.current || nameRef.current;
+    ref.focus();
   };
 
   const newRoutine = () => {
@@ -109,6 +118,7 @@ export default ({
   };
 
   const addRoutine = () => {
+    setErrors(null);
     modalizeRef.current?.open();
     if (!editModalState) {
       const routine = newRoutine();
@@ -135,12 +145,12 @@ export default ({
   const itemRefs = new Map();
   const [editModalState, setEditModalState] = useState(null);
   const modalizeRef = useRef<Modalize>(null);
-  const editItem = (item) => {
+  const editItem = (item: Item) => {
     modalizeRef.current?.open();
     setEditModalState(item);
   };
 
-  const deleteItem = (item) => {
+  const deleteItem = (item: Item) => {
     // Animate list to close gap when item is deleted
     LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
     remove(item.index);
@@ -192,7 +202,7 @@ export default ({
       <SwipeableItem
         key={item.key}
         item={newItem}
-        ref={(ref) => {
+        ref={(ref: any) => {
           if (ref && !itemRefs.get(item.key)) {
             itemRefs.set(item.key, ref);
           }
@@ -229,22 +239,27 @@ export default ({
       }}
     >
       <Portal>
-        <Modalize ref={modalizeRef} panGestureAnimatedValue={animated}>
+        <Modalize
+          handlePosition="inside"
+          handleStyle={{
+            top: 13,
+            width: 40,
+            height: 6,
+            backgroundColor: "#bcc0c1",
+          }}
+          ref={modalizeRef}
+          panGestureAnimatedValue={animated}
+        >
           <Box m={4}>
             <HStack justifyContent="space-between">
               <Button
-                size="sm"
+                size="md"
                 variant="ghost"
-                colorScheme="secondary"
                 onPress={() => modalizeRef.current.close()}
               >
-                Exit
+                Cancel
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onPress={updateRoutine}
-              >
+              <Button size="md" variant="ghost" onPress={updateRoutine}>
                 Save
               </Button>
             </HStack>
@@ -267,6 +282,7 @@ export default ({
           label="Routine Name"
           rules={{ required: "Routine Name is required!" }}
           onSubmitEditing={addRoutine}
+          ref={nameRef}
           returnKeyType="next"
         />
         <Text style={styles.activitiesText}>Activities:</Text>
@@ -274,13 +290,15 @@ export default ({
       {fields.length ? (
         <DraggableFlatList
           scrollEnabled={true}
-          onPlaceholderIndexChange={(index) => {
-            if (0 <= index && allowHaptics) {
+          onPlaceholderIndexChange={(index: number) => {
+            if (0 <= index) {
               console.log("placeholder", index);
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              if (allowHaptics) {
+                vibrate();
+              }
             }
           }}
-          keyExtractor={(item) => item.key}
+          keyExtractor={(item: { key: any }) => item.key}
           data={fields}
           renderItem={renderItem}
           onDragEnd={({ from, to }) => {
@@ -300,9 +318,16 @@ export default ({
       <Button onPress={addRoutine} m={2}>
         Add Step
       </Button>
-      <Button m={2} onPress={formMethods.handleSubmit(onSubmit, onErrors)}>
-        Submit
-      </Button>
+      <FormControl>
+        <Button m={2} onPress={formMethods.handleSubmit(onSubmit, onErrors)}>
+          Submit
+        </Button>
+        {typeof errors === "string" && (
+          <FormControl.Label m={2} textColor="red">
+            {errors}
+          </FormControl.Label>
+        )}
+      </FormControl>
     </View>
   );
 };

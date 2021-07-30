@@ -4,7 +4,7 @@
   (:require ["react-native" :as ReactNative]
             [reagent.core :as r]))
 
-
+(def web? (= "web" (.-OS ReactNative/Platform)))
 (def ActionSheet (.-default (js/require "../src/stories/ActionSheet.jsx")))
 
 (def RoutineList (.-default (js/require "../src/stories/RoutineList.jsx")))

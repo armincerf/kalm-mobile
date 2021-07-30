@@ -59,8 +59,6 @@ const splitbee = {
     init: (token) => {
         projectToken = token;
         loadUid();
-        console.log(AppState);
-        AppState.removeEventListener('change', onChange);
     },
     setUserId: (id) => {
         userId = id;
