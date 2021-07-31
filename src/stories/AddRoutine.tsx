@@ -1,16 +1,15 @@
 import React, { useCallback, useRef } from "react";
-import {
-  useWatch,
-  Controller,
-} from "react-hook-form";
+import { useWatch, Controller } from "react-hook-form";
 import {
   Center,
-  View,
+  Box,
   Switch,
   FormControl,
   Pressable,
   HStack,
   Image,
+  Text,
+  Accordion,
 } from "native-base";
 import { FormTextInput } from "./FormTextInput";
 import { FormDurationInput } from "./FormDurationInput";
@@ -69,8 +68,11 @@ const AddRoutine = ({ field, index, ...props }) => {
 
   const Toggle = ({ name, label, value }) => {
     return (
-      <>
-        <FormControl.Label>{label}</FormControl.Label>
+      <HStack style={{
+flex: 1,
+        justifyContent: "space-between",
+      }}>
+        <Text isTruncated w="80%" noOfLines={2} my={2}>{label}</Text>
         <Controller
           control={props.control}
           rules={{
@@ -88,7 +90,7 @@ const AddRoutine = ({ field, index, ...props }) => {
           name={name}
           defaultValue={false}
         />
-      </>
+      </HStack>
     );
   };
   const NumberPicker = ({ name, label }) => {
@@ -104,7 +106,7 @@ const AddRoutine = ({ field, index, ...props }) => {
             <FormControl my={2}>
               <InputSpinner
                 min={1}
-                colorMin={"#40c5f4"} // use color theme?
+                colorMin={"#0891b2"} // use color theme?
                 value={value}
                 onBlur={onBlur}
                 skin="modern"
@@ -135,14 +137,24 @@ const AddRoutine = ({ field, index, ...props }) => {
 
     return (
       <>
-        {data.map(([name, label], idx) => (
-          <Toggle
-            name={`routines.${index}.${name}`}
-            value={values[idx]}
-            label={label}
-            key={name}
-          />
-        ))}
+        <Accordion allowMultiple my={4} bg={"#e5ecf2"}>
+          <Accordion.Item>
+            <Accordion.Summary>
+              Options
+              <Accordion.Icon />
+            </Accordion.Summary>
+            <Accordion.Details>
+              {data.map(([name, label], idx) => (
+                <Toggle
+                  name={`routines.${index}.${name}`}
+                  value={values[idx]}
+                  label={label}
+                  key={name}
+                />
+              ))}
+            </Accordion.Details>
+          </Accordion.Item>
+        </Accordion>
         {Boolean(duration) && (
           <FormDurationInput
             {...props}
@@ -159,7 +171,7 @@ const AddRoutine = ({ field, index, ...props }) => {
   };
 
   return (
-    <View key={field.id} width="90%">
+    <Box key={field.id} width="90%" m={4}>
       <FormTextInput
         {...props}
         autoFocus={true}
@@ -199,7 +211,7 @@ const AddRoutine = ({ field, index, ...props }) => {
           defaultValue=""
         />
       </Center>
-    </View>
+    </Box>
   );
 };
 

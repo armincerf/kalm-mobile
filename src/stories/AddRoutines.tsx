@@ -264,8 +264,12 @@ console.log(statusStyle);
       <Portal>
         <Modalize
           handlePosition="inside"
-          onOpen={() => { setStatusStyle("light-content"); }}
-          onClose={() => { setStatusStyle("default"); }}
+          onOpen={() => {
+            setStatusStyle("light-content");
+          }}
+          onClose={() => {
+            setStatusStyle("default");
+          }}
           handleStyle={{
             top: 13,
             width: 40,
@@ -275,16 +279,16 @@ console.log(statusStyle);
           ref={modalizeRef}
           panGestureAnimatedValue={animated}
         >
-          <Box m={4}>
+          <Box>
             <HStack justifyContent="space-between">
               <Button
-                size="md"
+                size="lg"
                 variant="ghost"
                 onPress={() => modalizeRef.current.close()}
               >
                 Cancel
               </Button>
-              <Button size="md" variant="ghost" onPress={updateRoutine}>
+              <Button size="lg" variant="ghost" onPress={updateRoutine}>
                 Save
               </Button>
             </HStack>
@@ -300,16 +304,7 @@ console.log(statusStyle);
           </Box>
         </Modalize>
       </Portal>
-      <Box m={2}>
-        <FormTextInput
-          {...formMethods}
-          name="routineName"
-          label="Routine Name"
-          rules={{ required: "Routine Name is required!" }}
-          onSubmitEditing={addRoutine}
-          ref={nameRef}
-          returnKeyType="next"
-        />
+      <Box m={2} mt={0}>
         <Box zIndex={10}>
           <FormControl.Label>Type of activity (optional)</FormControl.Label>
           <Controller
@@ -324,6 +319,16 @@ console.log(statusStyle);
             defaultValue=""
           />
         </Box>
+
+        <FormTextInput
+          {...formMethods}
+          name="routineName"
+          label="Routine Name"
+          rules={{ required: "Routine Name is required!" }}
+          onSubmitEditing={addRoutine}
+          ref={nameRef}
+          returnKeyType="next"
+        />
       </Box>
 
       {fields.length ? (
