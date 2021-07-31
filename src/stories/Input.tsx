@@ -9,7 +9,7 @@ export const TextInput: any = React.forwardRef((props: any, forwardedRef) => {
   return (
     <FormControl>
       {Boolean(label) && <FormControl.Label>{label}</FormControl.Label>}
-      <Input isError={isError} {...textInputProps} ref={forwardedRef} />
+      <Input bg="#e5ecf2" isError={isError} {...textInputProps} ref={forwardedRef} />
       {isError && <FormControl.ErrorMessage>{error}</FormControl.ErrorMessage>}
     </FormControl>
   )

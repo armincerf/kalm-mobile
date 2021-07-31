@@ -2,6 +2,7 @@ import React from "react"
 import { Box, SectionList, Button} from "native-base"
 export default ({data, handlePress}) => {
   return (
+    <Box height="80%">
     <SectionList
       sections={data}
       keyExtractor={(item, index) => item + index}
@@ -26,5 +27,7 @@ export default ({data, handlePress}) => {
         </Box>
       )}
     />
+    </Box>
+
   )
 }

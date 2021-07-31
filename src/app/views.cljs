@@ -225,25 +225,19 @@
                                  {:title (or k "No Type") :data v})
                                (group-by :type routines))]
     [:<>
-     [:> Box {:bg "white"
-              :p 4}
-      [text "version = 0.0.10"]
-      [:> Button {:onPress #(rf/dispatch [:wipe-db])
-                  :variant "outline"
-                  :colorScheme "secondary"
-                  :m 4} "Wipe DB"]
-      [:> Button {:onPress c/register-notifications
-                  :variant "outline"
-                  :colorScheme "secondary"
-                  :m 4} "Notifications register"]
-      [:> Heading
-       {:py 2}
-       "Routines:"]
+     [text "version = 0.0.12"]
+     [:> Button {:onPress #(rf/dispatch [:wipe-db])
+                 :variant "outline"
+                 :colorScheme "secondary"
+                 :m 4} "Wipe DB"]
+     [:> Heading
+      {:py 2}
+      "Routines:"]
 
-      [:> RoutineList
-       {:data grouped-routines
-        :handlePress
-        (fn [^js a]
-          (rf/dispatch
-           [:navigate navigation "Routine"
-            (js->clj a :keywordize-keys true)]))}]]]))
+     [:> RoutineList
+      {:data grouped-routines
+       :handlePress
+       (fn [^js a]
+         (rf/dispatch
+          [:navigate navigation "Routine"
+           (js->clj a :keywordize-keys true)]))}]]))

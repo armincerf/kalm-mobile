@@ -199,6 +199,7 @@
                                             left
                                             " left to go!"))))]
                  (log "sending" #js [idx (:name next-activity) message " in " (/ trigger-time 1000)] )
+                 c/register-notifications
                  (c/send-notification (clj->js (assoc next-activity :message message)) (/ trigger-time 1000))))))
          activities))))))
 
@@ -247,6 +248,7 @@
 (defn add-routine
   [{:keys [db]} [_ form-data]]
   (let [data (js->clj form-data :keywordize-keys true)
+        type (:type data)
         parse-routines
         (fn [routines]
           (->> routines
@@ -270,7 +272,7 @@
                              processed-duration
                              false)))))))
         routine {:name (:routineName data)
-                 :type "My Routines"
+                 :type (if (seq type) type "My Routines")
                  :activities (parse-routines (:routines data))}]
     {:db (update-in db [:persisted-state :my-routines] conj routine)
      :fx [[:navigate! [(:navigation db) "Home"]]]}))

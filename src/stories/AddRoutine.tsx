@@ -1,15 +1,9 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef } from "react";
 import {
-  FormProvider,
-  useForm,
-  useFieldArray,
   useWatch,
-  useFormContext,
-  useController,
   Controller,
 } from "react-hook-form";
 import {
-  Button,
   Center,
   View,
   Switch,
@@ -20,7 +14,7 @@ import {
 } from "native-base";
 import { FormTextInput } from "./FormTextInput";
 import { FormDurationInput } from "./FormDurationInput";
-import { vibrate, isWeb } from "./utils";
+import { vibrate } from "./utils";
 import InputSpinner from "react-native-input-spinner";
 
 const FeelingPicker = ({ setValue, field, feelingName }) => {
@@ -110,8 +104,8 @@ const AddRoutine = ({ field, index, ...props }) => {
             <FormControl my={2}>
               <InputSpinner
                 min={1}
-                colorMin={"#40c5f4"}
-                value={field.value}
+                colorMin={"#40c5f4"} // use color theme?
+                value={value}
                 onBlur={onBlur}
                 skin="modern"
                 onChange={onChange}
@@ -130,7 +124,6 @@ const AddRoutine = ({ field, index, ...props }) => {
     const data = [
       ["hasNotification", "Send a notification when this activity starts?"],
       ["hasGif", "Generate a random gif for this activity?"],
-      //["hasCustomImage", "Upload your own image for this activity?"],
       ["hasDuration", "Add a duration?"],
     ];
     const names: string[] = data.map((d) => `routines.${index}.${d[0]}`);
@@ -138,7 +131,7 @@ const AddRoutine = ({ field, index, ...props }) => {
       control,
       name: names,
     });
-    const [_notif, _gif, /*image,*/ duration]: boolean[] = values;
+    const [_notif, _gif, duration]: boolean[] = values;
 
     return (
       <>
@@ -163,10 +156,6 @@ const AddRoutine = ({ field, index, ...props }) => {
         />
       </>
     );
-  };
-
-  const MaybeFields = () => {
-    return <></>;
   };
 
   return (
@@ -210,7 +199,6 @@ const AddRoutine = ({ field, index, ...props }) => {
           defaultValue=""
         />
       </Center>
-      <MaybeFields />
     </View>
   );
 };

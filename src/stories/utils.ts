@@ -64,7 +64,6 @@ export const getDeviceInfo = async () => {
   };
   return info;
 };
-
 export const getName = () => {
   const os = Device.osName + " " + Device.osVersion;
   const device = {
@@ -75,14 +74,11 @@ export const getName = () => {
 };
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => {
-    ({
-      shouldShowAlert: false,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    },
-      console.log("yoyofll"));
-  },
+  handleNotification: async () => ({
+    shouldShowAlert: false,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
 });
 
 export async function schedulePushNotification(activity, seconds) {
@@ -90,9 +86,10 @@ export async function schedulePushNotification(activity, seconds) {
     await Notifications.scheduleNotificationAsync({
       content: {
         _contentAvailable: true,
-        title: `Its time to start '${activity.name}'!`,
-        body: activity?.description || activity.message,
-        data: { data: "goes here" },
+        title: `It's time to start '${activity.name}'!`,
+        body: activity?.description || activity?.message || "Have fun!",
+        ios: { sound: true },
+        sound: "default",
       },
 
       trigger: { seconds: seconds },
@@ -107,7 +104,13 @@ export async function registerForPushNotificationsAsync() {
       await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
+      const { status } = await Notifications.requestPermissionsAsync({
+        ios: {
+          allowAlert: true,
+          allowSound: true,
+          allowAnnouncements: true,
+        },
+      });
       finalStatus = status;
     }
     if (finalStatus !== "granted") {

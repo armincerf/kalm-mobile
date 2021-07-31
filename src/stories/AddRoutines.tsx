@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import {
   Button,
   Pressable,
@@ -8,6 +8,7 @@ import {
   Icon,
   FormControl,
   Center,
+  StatusBar,
 } from "native-base";
 import AddRoutine from "./AddRoutine";
 import { FormTextInput } from "./FormTextInput";
@@ -26,6 +27,7 @@ import {
 } from "react-native";
 import Animated from "react-native-reanimated";
 import SwipeableItem, { UnderlayParams } from "react-native-swipeable-item";
+import AutocompleteDropdown from "./AutocompleteDropdown";
 // this is based on react-native-draggable-flatlist with some modifications to fix errors and improve performance
 import DraggableFlatList, { RenderItemParams } from "./draggable-list";
 import { Modalize } from "react-native-modalize";
@@ -58,9 +60,12 @@ type Item = {
   hasDuration?: boolean;
   cycleCount?: number;
   hasCustomImage?: boolean;
+  type?: string;
 };
 
 type FormValues = {
+  routineName: string;
+  type?: string;
   routines: Item[];
 };
 
@@ -95,11 +100,13 @@ export default ({
 
   const formMethods = useForm<FormValues>({
     defaultValues: {
+      routineName: "",
+      type: "",
       routines: initialRoutines,
     },
   });
 
-  const { control, formState } = formMethods;
+  const { control, formState, setValue } = formMethods;
   const [allowHaptics, setAllowHaptics] = useState(!isWeb);
   const fieldArrayMethods = useFieldArray({
     control,
@@ -159,6 +166,7 @@ export default ({
     modalizeRef.current?.open();
     setEditModalState(item);
   };
+  const [statusStyle, setStatusStyle] = useState("default");
 
   const deleteItem = (item: Item) => {
     // Animate list to close gap when item is deleted
@@ -240,19 +248,24 @@ export default ({
       </SwipeableItem>
     );
   };
+console.log(statusStyle);
 
   return (
     <View
       style={{
         flex: 1,
+        justifyContent: "space-between",
         marginTop: 20,
         marginBottom: 40,
         borderRadius: 3,
       }}
     >
+      <StatusBar barStyle={statusStyle} />
       <Portal>
         <Modalize
           handlePosition="inside"
+          onOpen={() => { setStatusStyle("light-content"); }}
+          onClose={() => { setStatusStyle("default"); }}
           handleStyle={{
             top: 13,
             width: 40,
@@ -297,8 +310,22 @@ export default ({
           ref={nameRef}
           returnKeyType="next"
         />
-        <Text style={styles.activitiesText}>Activities:</Text>
+        <Box zIndex={10}>
+          <FormControl.Label>Type of activity (optional)</FormControl.Label>
+          <Controller
+            control={control}
+            rules={{
+              required: false,
+            }}
+            render={(controlprops) => (
+              <AutocompleteDropdown {...controlprops} set={setValue} />
+            )}
+            name="type"
+            defaultValue=""
+          />
+        </Box>
       </Box>
+
       {fields.length ? (
         <DraggableFlatList
           scrollEnabled={true}
@@ -323,23 +350,25 @@ export default ({
           activationDistance={20}
         />
       ) : (
-        <Box m={4}>
-          <Text>No activities yet :(</Text>
-        </Box>
+        <Center>
+          <Text>No Activities... :(</Text>
+        </Center>
       )}
-      <Button onPress={addRoutine} m={2}>
-        Add Step
-      </Button>
-      <FormControl>
-        <Button m={2} onPress={formMethods.handleSubmit(onSubmit, onErrors)}>
-          Submit
+      <Box>
+        <Button onPress={addRoutine} m={2}>
+          Add Step
         </Button>
-        {typeof errors === "string" && (
-          <FormControl.Label m={2} textColor="red">
-            {errors}
-          </FormControl.Label>
-        )}
-      </FormControl>
+        <FormControl>
+          <Button m={2} onPress={formMethods.handleSubmit(onSubmit, onErrors)}>
+            Submit
+          </Button>
+          {typeof errors === "string" && (
+            <FormControl.Label m={2} textColor="red">
+              {errors}
+            </FormControl.Label>
+          )}
+        </FormControl>
+      </Box>
     </View>
   );
 };

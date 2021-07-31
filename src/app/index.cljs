@@ -1,6 +1,7 @@
 (ns app.index
   (:require
    ["@react-navigation/native" :as nav]
+   ["react-native-safe-area-context" :refer [SafeAreaProvider]]
    ["@react-navigation/stack" :as rn-stack]
    ["expo-constants" :as expo-constants]
    ["react-native" :as rn]
@@ -161,7 +162,6 @@
     [:> c/AddRoutine {:handleSubmit #(rf/dispatch [:add-routine %])
                       :animated animated}]))
 
-
 (defn screen-home [{:keys [navigation] :as props}]
   (let [saved-routines @(rf/subscribe [:persisted-state [:my-routines]])
         routines (mapv gen-routine (concat
@@ -206,7 +206,7 @@
                                                        (j/call :getCurrentRoute)
                                                        (j/get :name))]
                             (when (not= prev-route-name current-route-name)
-                                ;; This is where you can do side effecty things like analytics
+                              ;; This is where you can do side effecty things like analytics
                               (when (routine? current-route-name)
                                 (let [id (-> @!navigation-ref
                                              (j/call :getCurrentRoute)
@@ -228,6 +228,7 @@
            {:style {:borderRadius (interpolate 0 20)
                     :transform [{:scale (interpolate 1 0.92)}]
                     :opacity (interpolate 1 0.75)}}
+           (js/console.log animated)
            [:> (navigator)
             (screen {:name "Home"
                      :component (r/reactify-component screen-home)})
