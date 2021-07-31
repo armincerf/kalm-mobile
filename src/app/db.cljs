@@ -17,5 +17,4 @@
                :version "version-not-set"}
               (when db-from-string
                 {:persisted-state db-from-string}))]
-      (prn "init db = " db)
       (rf/dispatch [:initialize-db db]))))

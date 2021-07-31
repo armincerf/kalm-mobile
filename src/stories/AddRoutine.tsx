@@ -17,8 +17,6 @@ import { vibrate } from "./utils";
 import InputSpinner from "react-native-input-spinner";
 
 const FeelingPicker = ({ setValue, field, feelingName }) => {
-  console.log("render");
-
   //apparently you can't dynamically require things :/
   const kalmFace = require(`../../assets/images/kalm.png`);
   const panikFace = require(`../../assets/images/panik.png`);

@@ -4,6 +4,7 @@
    [re-frame.core :as rf :refer [dispatch-sync]]
    [clojure.edn :as edn]
    ["react-native-countdown-circle-timer" :refer [CountdownCircleTimer]]
+   ["react-native-safe-area-context" :refer [SafeAreaView]]
    ["native-base" :refer [Pressable
                           Box
                           SectionList
@@ -219,25 +220,56 @@
            (when @show-preview?
              [routine-view routine])]))})))
 
+(defn gen-routine
+  [root-activity]
+  (let [gen-cycles
+        (fn [activities cycle-count]
+          (for [cycle (range cycle-count)]
+            (map
+             #(assoc % :cycle-idx (inc cycle) :total-cycles cycle-count)
+             activities)))
+        gen-activity
+        (fn [props]
+          (let [activity? (some? (:name props))
+                activity (if activity?
+                           props
+                           (:activity props))
+                activities (if (some? (:duration props))
+                             [props]
+                             (:activities activity))
+                cycle-count (or (:cycle-count props)
+                                (:cycleCount activity))]
+            (concat
+             (:pre-activity activity)
+             (gen-cycles activities (or cycle-count 1))
+             (:post-activity activity))))
+        gen-activities (fn [activities]
+                         (for [props activities]
+                           (gen-activity props)))
+        activities
+        (remove nil? (flatten (gen-activities (:activities root-activity))))
+        total-time (reduce
+                    (fn [count activity]
+                      (+ count (:duration activity)))
+                    0
+                    activities)]
+    (assoc root-activity
+           :activities activities
+           :total-time total-time)))
+
 (defn routines
-  [{:keys [navigation]} routines]
-  (let [grouped-routines (mapv (fn [[k v]]
+  [{:keys [navigation]} routines animated]
+  (let [saved-routines @(rf/subscribe [:persisted-state [:my-routines]])
+        routines (mapv gen-routine (concat saved-routines routines))
+        grouped-routines (mapv (fn [[k v]]
                                  {:title (or k "No Type") :data v})
                                (group-by :type routines))]
-    [:<>
-     [text "version = 0.0.12"]
-     [:> Button {:onPress #(rf/dispatch [:wipe-db])
-                 :variant "outline"
-                 :colorScheme "secondary"
-                 :m 4} "Wipe DB"]
-     [:> Heading
-      {:py 2}
-      "Routines:"]
-
-     [:> RoutineList
-      {:data grouped-routines
-       :handlePress
-       (fn [^js a]
-         (rf/dispatch
-          [:navigate navigation "Routine"
-           (js->clj a :keywordize-keys true)]))}]]))
+    [:> RoutineList
+     {:data grouped-routines
+      :animated animated
+      :handleAddRoutine (fn [props] (rf/dispatch [:add-routine props]))
+      :handlePress
+      (fn [^js a]
+        (rf/dispatch
+         [:navigate navigation "Routine"
+          (js->clj a :keywordize-keys true)]))}]))

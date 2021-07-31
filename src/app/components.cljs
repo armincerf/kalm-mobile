@@ -7,7 +7,7 @@
 (def web? (= "web" (.-OS ReactNative/Platform)))
 (def ActionSheet (.-default (js/require "../src/stories/ActionSheet.jsx")))
 
-(def RoutineList (.-default (js/require "../src/stories/RoutineList.jsx")))
+(def RoutineList (.-default (js/require "../src/stories/RoutineList.tsx")))
 
 (def AddRoutine (.-default (js/require "../src/stories/AddRoutines.tsx")))
 

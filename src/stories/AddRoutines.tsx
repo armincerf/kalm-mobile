@@ -14,7 +14,7 @@ import AddRoutine from "./AddRoutine";
 import { FormTextInput } from "./FormTextInput";
 import { Portal } from "react-native-portalize";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-import { isWeb, vibrate } from "./utils";
+import { isWeb, TAB_HEIGHT, vibrate } from "./utils";
 import {
   Text,
   View,
@@ -31,6 +31,7 @@ import AutocompleteDropdown from "./AutocompleteDropdown";
 // this is based on react-native-draggable-flatlist with some modifications to fix errors and improve performance
 import DraggableFlatList, { RenderItemParams } from "./draggable-list";
 import { Modalize } from "react-native-modalize";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { multiply, sub } = Animated;
 const OVERSWIPE_DIST = 20;
@@ -115,8 +116,13 @@ export default ({
 
   const { fields, append, remove, move, update } = fieldArrayMethods;
 
+const resetForm = () => {
+    setEditModalState(null);
+  };
+
   const onSubmit = (form: any) => {
     handleSubmit(form);
+    formMethods.reset();
   };
 
   const [errors, setErrors] = useState({});
@@ -125,7 +131,6 @@ export default ({
   const onErrors = (errors: object) => {
     const error = Object.values(errors)[0];
     setErrors(error.message);
-    console.log(error.ref);
     const ref = error.ref?.current || nameRef.current;
     ref.focus();
   };
@@ -141,10 +146,6 @@ export default ({
       const routine = newRoutine();
       setEditModalState(routine);
     }
-  };
-
-  const resetForm = () => {
-    setEditModalState(null);
   };
 
   const formRoutine = () => {
@@ -166,7 +167,7 @@ export default ({
     modalizeRef.current?.open();
     setEditModalState(item);
   };
-  const [statusStyle, setStatusStyle] = useState("default");
+  const [statusStyle, setStatusStyle] = useState("dark-content");
 
   const deleteItem = (item: Item) => {
     // Animate list to close gap when item is deleted
@@ -248,15 +249,16 @@ export default ({
       </SwipeableItem>
     );
   };
-console.log(statusStyle);
+  console.log(statusStyle);
+  const insets = useSafeAreaInsets();
 
   return (
     <View
       style={{
         flex: 1,
         justifyContent: "space-between",
-        marginTop: 20,
-        marginBottom: 40,
+        marginBottom: insets.bottom + TAB_HEIGHT,
+        marginTop: insets.top + 10,
         borderRadius: 3,
       }}
     >
@@ -268,7 +270,7 @@ console.log(statusStyle);
             setStatusStyle("light-content");
           }}
           onClose={() => {
-            setStatusStyle("default");
+            setStatusStyle("dark-content");
           }}
           handleStyle={{
             top: 13,

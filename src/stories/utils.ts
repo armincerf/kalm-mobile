@@ -73,6 +73,9 @@ export const getName = () => {
   return `${device.model}, ${device.deviceId} - ${os}`;
 };
 
+export const COLOR_ACCENT = "#0891b2";
+export const TAB_HEIGHT = 70;
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: false,

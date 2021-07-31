@@ -104,7 +104,6 @@
 
 (defn timeout-fn
   [key fn]
-  (prn "doing thing" key fn)
   (if (and key (.exists timeout key))
     (fn key)
     (rf/console :warn "nil timeout passed to timeout-fn" key fn)))
@@ -172,7 +171,6 @@
  :notifs/schedule!
  (fn [activities]
    (when-not c/web?
-     (prn "schedule " (map :name activities))
      (let [duration (atom 0)
            done? (atom false)]
        (doall
@@ -215,7 +213,6 @@
  :schedule-notifications!
  [base-interceptors]
  (fn [{:keys [db]} [_ routine-id]]
-   (prn "sched")
    (let [idx (get-in db [:persisted-state routine-id :current-idx])
          activities (get-in db [:state routine-id :current-routine :activities])
          path [:persisted-state routine-id :scheduled?]]
@@ -229,7 +226,6 @@
                             (drop idx)
                             (remove :disableNotifications)
                             (take-while+ :duration))]
-         (prn "to nott" to-notify)
          (when (seq to-notify)
            {:fx [[:notifs/schedule! to-notify]]
             :db (assoc-in db path true)}))))))
@@ -274,8 +270,7 @@
         routine {:name (:routineName data)
                  :type (if (seq type) type "My Routines")
                  :activities (parse-routines (:routines data))}]
-    {:db (update-in db [:persisted-state :my-routines] conj routine)
-     :fx [[:navigate! [(:navigation db) "Home"]]]}))
+    {:db (update-in db [:persisted-state :my-routines] conj routine)}))
 
 (defn routine? [page] (= "Routine" page))
 
