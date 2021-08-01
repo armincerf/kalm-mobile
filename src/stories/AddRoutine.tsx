@@ -13,7 +13,7 @@ import {
 } from "native-base";
 import { FormTextInput } from "./FormTextInput";
 import { FormDurationInput } from "./FormDurationInput";
-import { vibrate } from "./utils";
+import { vibrate, COLOR_ACCENT } from "./utils";
 import InputSpinner from "react-native-input-spinner";
 
 const FeelingPicker = ({ setValue, field, feelingName }) => {
@@ -104,7 +104,7 @@ flex: 1,
             <FormControl my={2}>
               <InputSpinner
                 min={1}
-                colorMin={"#0891b2"} // use color theme?
+                colorMin={COLOR_ACCENT} // use color theme?
                 value={value}
                 onBlur={onBlur}
                 skin="modern"

@@ -21,8 +21,9 @@
 
 (rf/reg-sub
  :paused?
- (fn [db [_ name]]
-   (let [id (or name (get-in db [:current-page :props :name]))]
+ (fn [db [_ id]]
+   (let [id (or id (get-in db [:current-page :props :id]))]
+     (prn "id " id)
      (some-> db
              :persisted-state
              (get id)
@@ -30,8 +31,8 @@
 
 (rf/reg-sub
  :time-left
- (fn [db [_ name]]
-   (let [id (or name (get-in db [:current-page :props :name]))]
+ (fn [db [_ id]]
+   (let [id (or id (get-in db [:current-page :props :id]))]
      (some-> db
              :persisted-state
              (get id)

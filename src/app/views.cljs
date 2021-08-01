@@ -34,7 +34,7 @@
      [countdown
       {:isPlaying (boolean (and (not preview?)
                                 (not paused?)))
-       :key (gensym name)
+       :key (str name " " cycle-idx)
        :duration (js/Math.round (/ duration 1000))
        :colors [["#004777" 0.4]
                 ["#F7B801" 0.4]
@@ -109,7 +109,7 @@
     (when (seq sectioned-activities)
       [:> SectionList
        {:sections [{:title "Section" :data sectioned-activities}]
-        :keyExtractor (fn [^js activity] (str (j/get activity :name) (or (j/get activity :cycle-idx) 0)))
+        :keyExtractor (fn [^js activity] (str (j/get activity :id) (or (j/get activity :cycle-idx) 0)))
         :renderItem #(r/as-element (activity-view (js->clj (.-item %) :keywordize-keys true) true))}])))
 
 (defn no-duration-button
@@ -150,7 +150,7 @@
 
 (defn routine-player
   [{:keys [route]} _ _]
-  (let [{:keys [name description activities] :as routine}
+  (let [{:keys [id name description activities] :as routine}
         (edn/read-string (.-props (.-params route)))
         show-preview? (r/atom false)]
     (r/create-class
@@ -163,8 +163,7 @@
           activities)))
       :reagent-render
       (fn [_ current-activity running?]
-        (let [id name
-              no-duration?
+        (let [no-duration?
               (and current-activity
                    (not (:duration current-activity)))]
           [:<>
@@ -189,7 +188,7 @@
                  :on-press #(rf/dispatch [:start-routine routine 0])}
                 "Click to start routine"])
              (when running?
-               (let [paused? @(rf/subscribe [:paused? name])
+               (let [paused? @(rf/subscribe [:paused? id])
                      next-activity?
                      @(rf/subscribe [:persisted-state [id :next-activity]])]
                  [:<>
@@ -258,16 +257,18 @@
            :total-time total-time)))
 
 (defn routines
-  [{:keys [navigation]} routines animated]
+  [{:keys [navigation]} animated]
   (let [saved-routines @(rf/subscribe [:persisted-state [:my-routines]])
-        routines (mapv gen-routine (concat saved-routines routines))
+        routines (mapv gen-routine saved-routines)
         grouped-routines (mapv (fn [[k v]]
                                  {:title (or k "No Type") :data v})
                                (group-by :type routines))]
+    (def saved-routines saved-routines)
     [:> RoutineList
      {:data grouped-routines
       :animated animated
       :handleAddRoutine (fn [props] (rf/dispatch [:add-routine props]))
+      :settingsData [{:title "Admin stuff" :data [{:label "version 0.0.12"} {:label "Wipe Db" :action #(rf/dispatch [:wipe-db])}]}]
       :handlePress
       (fn [^js a]
         (rf/dispatch

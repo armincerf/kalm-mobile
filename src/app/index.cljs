@@ -52,6 +52,7 @@
 
 (def my-activity
   {:name "Morning Routine"
+   :id "1"
    :type "Meditation"
    :description "a good routine"
    :activities [{:cycle-count 5
@@ -61,6 +62,7 @@
 (def jacks
   {:name "Jumping jacks x 5"
    :type "Fitness"
+   :id "2"
    :description "good for fitness"
    :activities [{:cycle-count 5
                  :activity jumping-jacks}]})
@@ -68,6 +70,7 @@
 (def lazy
   {:name "Get ready for bed"
    :type "Chores"
+   :id "3"
    :description "do this or you won't sleep"
    :activities [{:name "Brush Teeth"
                  :description "Hold brush and hit teeth with it"
@@ -118,12 +121,13 @@
 (def random-chores
   {:name "Random Chores"
    :type "Chores"
+   :id "4"
    :hasGif true
    :activities (vec (shuffle (map (fn [c] (assoc c :hasGif true)) chores)))})
 
 (defn screen-main [props]
-  (let [{:keys [name]} (edn/read-string (.-props (.-params ^js (:route props))))
-        current-activity @(rf/subscribe [:persisted-state [name :current-activity]])
+  (let [{:keys [id]} (edn/read-string (.-props (.-params ^js (:route props))))
+        current-activity @(rf/subscribe [:persisted-state [id :current-activity]])
         running? (not (empty? current-activity))]
     [views/routine-player props current-activity running?]))
 
@@ -161,10 +165,10 @@
                                               (j/call :getCurrentRoute)
                                               (j/get-in [:params :props])
                                               (edn/read-string)
-                                              :name)]
+                                              :id)]
                                    (rf/dispatch [:save-time-left id])))
                                (when (routine? (:name page))
-                                 (let [id (-> page :props :name)]
+                                 (let [id (-> page :props :id)]
                                    (rf/dispatch [:save-time-left id])))
                                (.screen c/analytics current-route-name))
                              (swap! !route-name-ref merge {:current current-route-name})))}
@@ -181,14 +185,7 @@
              (screen {:name "Home"
                       :options {:headerShown false}
                       :component (r/reactify-component
-                                  #(views/routines % [my-activity
-                                                      random-chores
-                                                      random-chores
-                                                      random-chores
-                                                      random-chores
-                                                      random-chores
-                                                      random-chores
-                                                      lazy] animated))})
+                                  #(views/routines % animated))})
              (screen {:name "Routine"
                       :options {:title (or (:name routine) "Routine")}
                       :component (r/reactify-component screen-main)})]])]]]]]))
@@ -215,6 +212,7 @@
   (db/default-app-db)
   (when analytics
     (.identify c/analytics #js {:displayName (c/get-name)}))
-  (dispatch-sync [:set-version version])
-
+  (dispatch-sync [:init version [my-activity
+                                 random-chores
+                                 lazy]])
   (start))

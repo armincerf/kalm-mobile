@@ -74,6 +74,7 @@ export const getName = () => {
 };
 
 export const COLOR_ACCENT = "#0891b2";
+export const COLOR_HIGHLIGHT = "#A5F3FC"
 export const TAB_HEIGHT = 70;
 
 Notifications.setNotificationHandler({

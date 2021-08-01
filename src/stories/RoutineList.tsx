@@ -1,13 +1,47 @@
 import React from "react";
-import { Box, Button, View, Heading, StatusBar } from "native-base";
-import { SectionList, StyleSheet, TouchableOpacity, Text } from "react-native";
+import {
+  Box,
+  Button,
+  View,
+  Heading,
+  StatusBar,
+  Pressable,
+  Icon,
+} from "native-base";
+import {
+  SectionList,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+} from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AddRoutines from "./AddRoutines";
-import { Ionicons } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLOR_ACCENT, TAB_HEIGHT } from "./utils";
+import { COLOR_ACCENT, COLOR_HIGHLIGHT, TAB_HEIGHT } from "./utils";
+import { Settings } from "./Settings";
+import { SwipeItem, SwipeUnderlay } from "./SwipeItem";
+import { UnderlayParams } from "react-native-swipeable-item";
+import Animated from "react-native-reanimated";
+
 const Tab = createBottomTabNavigator();
+
+const renderUnderlayLeft = ({ item, percentOpen }: UnderlayParams<any>) => (
+  <Animated.View style={[styles.underlayLeft, { opacity: percentOpen }]}>
+    <SwipeUnderlay
+      bg="secondary.600"
+      pressFn={() => console.log(item)}
+      iconName="delete"
+    />
+    <SwipeUnderlay
+      bg="primary.600"
+      pressFn={() => console.log(item)}
+      iconName="edit"
+    />
+  </Animated.View>
+);
+
 const Routines = ({ data, handlePress }) => (
   <SafeAreaView>
     <Box p={4}>
@@ -19,12 +53,13 @@ const Routines = ({ data, handlePress }) => (
           backgroundColor: "#fff",
         }}
         keyExtractor={(item, index) => item + index}
-        renderItem={({ item }) => (
-          <View bg="white">
-            <Button variant="ghost" onPress={() => handlePress(item)}>
-              {item.name}
-            </Button>
-          </View>
+        renderItem={(props) => (
+          <SwipeItem
+            {...props}
+            drag={false}
+            renderUnderlayLeft={renderUnderlayLeft}
+            handlePress={handlePress}
+          />
         )}
         renderSectionHeader={({ section: { title } }) => (
           <Box
@@ -106,7 +141,11 @@ function TabBar({ state, descriptors, navigation }) {
               key={route.key}
               style={tabStyle}
             >
-              <Ionicons name={iconName} color={isFocused ? "#673ab7" : tabColor} size={isMiddle ? 48 : 24} />
+              <Ionicons
+                name={iconName}
+                color={isFocused ? COLOR_HIGHLIGHT : tabColor}
+                size={isMiddle ? 48 : 24}
+              />
               {Boolean(!isMiddle) && (
                 <Text style={{ color: tabColor }}>{label}</Text>
               )}
@@ -121,11 +160,13 @@ function TabBar({ state, descriptors, navigation }) {
 export default ({
   animated,
   handleAddRoutine,
+  settingsData,
   ...props
 }: {
   animated: any;
   data: object;
   handleAddRoutine: (e: any) => void;
+  settingsData: object[];
   handlePress: () => void;
 }) => {
   return (
@@ -171,8 +212,9 @@ export default ({
             tabBarTestID: "settings",
           }}
           name="Settings"
-          component={AddRoutines}
-        />
+        >
+          {() => <Settings data={settingsData} />}
+        </Tab.Screen>
       </Tab.Navigator>
     </>
   );
@@ -193,5 +235,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  underlayLeft: {
+    flex: 1,
+    backgroundColor: "gray",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    flexDirection: "row",
   },
 });

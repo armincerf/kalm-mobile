@@ -2,6 +2,7 @@
   (:require
    [re-frame.core :as rf]
    [lambdaisland.fetch :as fetch]
+   [potpuri.core :as p]
    [re-frame.db :as rf-db]
    ["smart-timeout" :as timeout]
    ["@react-native-async-storage/async-storage" :default AsyncStorage]
@@ -70,37 +71,40 @@
       (rf/console :error "No routine to resume" id idx routine))))
 
 (defn start-routine
-  [{:keys [db]} [_ {:keys [name]} idx]]
-  (let [routine (get-in db [:state name :current-routine])
+  [{:keys [db]} [_ {:keys [id]} idx]]
+  (let [routine (get-in db [:state id :current-routine])
         activities (vec (:activities routine))
-        routine-id (:name routine)
         activity (get activities idx)]
     (log "start activity" name)
     {:db (-> db
-             (assoc-in [:persisted-state routine-id :current-idx] idx)
-             (assoc-in [:persisted-state routine-id :current-activity] activity)
-             (assoc-in [:persisted-state routine-id :time-remaining] (:duration activity))
-             (assoc-in [:persisted-state routine-id :prev-activity]
+             (assoc-in [:persisted-state id :current-idx] idx)
+             (assoc-in [:persisted-state id :current-activity] activity)
+             (assoc-in [:persisted-state id :time-remaining] (:duration activity))
+             (assoc-in [:persisted-state id :prev-activity]
                        (when (and activity
                                   (pos? idx))
                          (get activities (dec idx))))
-             (assoc-in [:persisted-state routine-id :next-activity]
+             (assoc-in [:persisted-state id :next-activity]
                        (when-let [next (get activities (inc idx))]
                          next)))
-     :fx [[:dispatch [:schedule-notifications! routine-id]]
+     :fx [[:dispatch [:schedule-notifications! id]]
           (when-let [duration (:duration activity)]
             [:dispatch-later2
              {:ms duration
-              :key routine-id
+              :key id
               :dispatch [:start-routine
                          routine
                          (inc idx)]}])]}))
 
 
 
-(defn set-version
-  [db [_ version]]
-  (assoc db :version version))
+(defn init
+  [db [_ version routines]]
+  (let [routines (when (nil? (get-in routines [:persisted-state :my-routines]))
+                   routines)]
+    (-> db
+        (assoc-in [:persisted-state :my-routines] routines)
+        (assoc :version version))))
 
 (defn timeout-fn
   [key fn]
@@ -221,8 +225,7 @@
        ;; only schedule notifications for the next activities in the queue up
        ;; until there is one without a duration (because that requires manual
        ;; input)
-       (let [next-without-duration ()
-             to-notify (->> activities
+       (let [to-notify (->> activities
                             (drop idx)
                             (remove :disableNotifications)
                             (take-while+ :duration))]
@@ -267,10 +270,18 @@
                            (if (pos? processed-duration)
                              processed-duration
                              false)))))))
-        routine {:name (:routineName data)
+        routine {:id (or (:id data) (gensym (:routineName data)))
+                 :name (:routineName data)
                  :type (if (seq type) type "My Routines")
-                 :activities (parse-routines (:routines data))}]
-    {:db (update-in db [:persisted-state :my-routines] conj routine)}))
+                 :activities (parse-routines (:routines data))}
+        current-routines (get-in db [:persisted-state :my-routines])
+        existing-routine-index (p/find-index current-routines {:id (:id data)})]
+    (def data data)
+    (def current-routines current-routines)
+    (when (:id routine)
+      {:db (if existing-routine-index
+             (assoc-in db [:persisted-state :my-routines existing-routine-index] routine)
+             (update-in db [:persisted-state :my-routines] conj routine))})))
 
 (defn routine? [page] (= "Routine" page))
 
@@ -278,7 +289,7 @@
   [{:keys [db]} [_ navigation route props]]
   (let [db
         (if (routine? route)
-          (assoc-in db [:state (:name props) :current-routine] props)
+          (assoc-in db [:state (:id props) :current-routine] props)
           db)]
     {:fx [[:navigate! [navigation route props]]]
      :db (assoc db
@@ -289,7 +300,7 @@
 (defn update-activity
   [{:keys [db]} [_ activity index]]
   {:db (update-in db [:state
-                      (get-in db [:current-page :props :name])
+                      (get-in db [:current-page :props :id])
                       :current-routine
                       :activities
                       index] merge activity)})
@@ -311,7 +322,6 @@
 (rf/reg-event-fx :resume-routine  resume-routine)
 (rf/reg-event-db :set-state [base-interceptors] set-state)
 (rf/reg-event-db :initialize-db initialize-db)
-(rf/reg-event-db :set-version set-version)
 (rf/reg-event-fx :pause [base-interceptors] pause)
 (rf/reg-event-fx :save-time-left [base-interceptors] save-time-left)
 (rf/reg-event-fx :resume [base-interceptors] resume)
@@ -319,4 +329,5 @@
 (rf/reg-event-fx :navigate [base-interceptors] navigate)
 (rf/reg-event-fx :add-routine [base-interceptors] add-routine)
 (rf/reg-event-fx :update-activity [base-interceptors] update-activity)
+(rf/reg-event-db :init [base-interceptors] init)
 (rf/reg-event-db :wipe-db [base-interceptors] (fn [_ _] {:persisted-state {}}))

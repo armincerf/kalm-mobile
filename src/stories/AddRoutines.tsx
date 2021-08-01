@@ -31,7 +31,11 @@ import AutocompleteDropdown from "./AutocompleteDropdown";
 // this is based on react-native-draggable-flatlist with some modifications to fix errors and improve performance
 import DraggableFlatList, { RenderItemParams } from "./draggable-list";
 import { Modalize } from "react-native-modalize";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { SwipeItem, SwipeUnderlay } from "./SwipeItem";
 
 const { multiply, sub } = Animated;
 const OVERSWIPE_DIST = 20;
@@ -116,7 +120,7 @@ export default ({
 
   const { fields, append, remove, move, update } = fieldArrayMethods;
 
-const resetForm = () => {
+  const resetForm = () => {
     setEditModalState(null);
   };
 
@@ -175,39 +179,16 @@ const resetForm = () => {
     remove(item.index);
   };
 
-  const SwipeItem = ({ bg, pressFn, iconName }) => {
-    return (
-      <Pressable
-        bg={bg}
-        width={50}
-        justifyContent="center"
-        alignItems={"center"}
-        height="100%"
-        _light={{
-          borderColor: "dark.200",
-          color: "white",
-        }}
-        _dark={{
-          color: "white",
-          borderColor: "dark.600",
-        }}
-        onPress={pressFn}
-      >
-        <Icon color="white" as={<AntDesign name={iconName} />} size="sm" />
-      </Pressable>
-    );
-  };
-
   const renderUnderlayLeft = ({ item, percentOpen }: UnderlayParams<Item>) => (
     <Animated.View
       style={[styles.underlayLeft, { opacity: percentOpen }]} // Fade in on open
     >
-      <SwipeItem
+      <SwipeUnderlay
         bg="secondary.600"
         pressFn={() => deleteItem(item)}
         iconName="delete"
       />
-      <SwipeItem
+      <SwipeUnderlay
         bg="primary.600"
         pressFn={() => editItem(item)}
         iconName="edit"
@@ -346,7 +327,16 @@ const resetForm = () => {
           }}
           keyExtractor={(item: { key: any }) => item.key}
           data={fields}
-          renderItem={renderItem}
+          renderItem={(props) => (
+            <SwipeItem
+              {...props}
+              index={props.index}
+              renderUnderlayLeft={renderUnderlayLeft}
+              handlePress={(e) =>
+                editItem({ ...props.item, index: props.index })
+              }
+            />
+          )}
           onDragEnd={({ from, to }) => {
             setAllowHaptics(false);
             move(from, to);
