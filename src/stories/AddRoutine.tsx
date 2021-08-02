@@ -135,7 +135,7 @@ flex: 1,
 
     return (
       <>
-        <Accordion allowMultiple my={4} bg={"#e5ecf2"}>
+        <Accordion allowMultiple my={4}>
           <Accordion.Item>
             <Accordion.Summary>
               Options

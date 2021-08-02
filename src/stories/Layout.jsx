@@ -8,6 +8,5 @@ export const Layout = ({ children, style }) => (
 const s = StyleSheet.create({
   app: {
     flex: 1,
-      backgroundColor: '#fafafa',
   },
 });

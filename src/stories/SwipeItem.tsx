@@ -29,9 +29,10 @@ export const SwipeUnderlay = ({ bg, pressFn, iconName }) => {
   );
 };
 
-export const SwipeItem = ({ item, index, drag, renderUnderlayLeft, handlePress }) => {
+export const SwipeItem = ({ item, section, index, drag, renderUnderlayLeft, handlePress }) => {
   const itemRefs = new Map();
-  const newItem = { ...item, index };
+  const newItem = { ...item, index };  
+  const isLast = index === section?.data?.length - 1;
   return (
     <SwipeableItem
       key={item.key}
@@ -48,7 +49,8 @@ export const SwipeItem = ({ item, index, drag, renderUnderlayLeft, handlePress }
       <Box
         style={[
           styles.row,
-          { backgroundColor: item.backgroundColor || COLOR_ACCENT, height: item.height },
+          (isLast && !item.height && styles.lastRow),
+          { backgroundColor: item.backgroundColor || COLOR_ACCENT, height: item.height || 80 },
         ]}
       >
         {Boolean(drag) && (
@@ -74,6 +76,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  lastRow: {
+    borderBottomLeftRadius: 10,
+    backgroundColor: "red",
+    borderBottomRightRadius: 10,
   },
   text: {
     fontWeight: "bold",

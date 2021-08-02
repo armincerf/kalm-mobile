@@ -20,25 +20,31 @@
    [app.handlers :as handlers]
    [app.components :refer [RoutineList] :as c]
 
-   [applied-science.js-interop :as j]))
+   [applied-science.js-interop :as j]
+   [react-native :as rn]))
 
 (def countdown (r/adapt-react-class CountdownCircleTimer))
 (def animated-text (r/adapt-react-class (.-Text (.-Animated ^js ReactNative))))
-(def text (r/adapt-react-class (.-Text ^js ReactNative)))
+(def text (r/adapt-react-class Text))
 
 (defn countdown-display
   [{:keys [duration name cycle-idx]} preview? paused?]
   (let [time-left @(rf/subscribe [:time-left])
-        duration (or (and (not preview?) time-left) duration)]
+        duration (or (and (not preview?) time-left) duration)
+        scheme (rn/useColorScheme)]
     [:> Center
      [countdown
       {:isPlaying (boolean (and (not preview?)
                                 (not paused?)))
        :key (str name " " cycle-idx)
        :duration (js/Math.round (/ duration 1000))
-       :colors [["#004777" 0.4]
-                ["#F7B801" 0.4]
-                ["#A30000" 0.2]]}
+       :colors (if (= "dark" scheme)
+                 [["#22D3EE" 0.4]
+                  ["#F7B801" 0.4]
+                  ["#A30000" 0.2]]
+                 [["#004777" 0.4]
+                  ["#F7B801" 0.4]
+                  ["#A30000" 0.2]])}
       (fn [^js props]
         (let [remaining-time (.-remainingTime props)
               color (.-animatedColor props)
@@ -71,12 +77,11 @@
   ([{:keys [name subtitle description image feeling cycle-idx total-cycles] :as activity} preview?]
    (let [paused? @(rf/subscribe [:paused?])]
      [:> Box
-      {:bg "white"
-       :m 5
+      {:m 5
        :shadow 2
        :rounded "lg"}
       (when (:duration activity)
-        [countdown-display activity preview? paused?])
+        [:f> countdown-display activity preview? paused?])
       (when image
         (let [image-tag (fn [image]
                           [:> Image {:source {:uri image}
@@ -258,7 +263,8 @@
 
 (defn routines
   [{:keys [navigation]} animated]
-  (let [saved-routines @(rf/subscribe [:persisted-state [:my-routines]])
+
+  (let [saved-routines (remove nil? @(rf/subscribe [:persisted-state [:my-routines]]))
         routines (mapv gen-routine saved-routines)
         grouped-routines (mapv (fn [[k v]]
                                  {:title (or k "No Type") :data v})
@@ -266,9 +272,12 @@
     (def saved-routines saved-routines)
     [:> RoutineList
      {:data grouped-routines
+      :handleDeleteRoutine (fn [routine] (rf/dispatch [:delete-routine routine]))
+      :handleEditRoutine (fn [routine] (rf/dispatch [:edit-routine routine]))
       :animated animated
       :handleAddRoutine (fn [props] (rf/dispatch [:add-routine props]))
-      :settingsData [{:title "Admin stuff" :data [{:label "version 0.0.12"} {:label "Wipe Db" :action #(rf/dispatch [:wipe-db])}]}]
+      :settingsData [{:title "Admin stuff" :data [{:label "version 0.0.12"}
+                                                  {:label "Wipe Db" :action #(rf/dispatch [:wipe-db])}]}]
       :handlePress
       (fn [^js a]
         (rf/dispatch

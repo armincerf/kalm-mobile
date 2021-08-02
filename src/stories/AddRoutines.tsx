@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import {
   Button,
-  Pressable,
+  View,
+  Text,
   HStack,
   Box,
-  Icon,
   FormControl,
   Center,
   StatusBar,
@@ -13,28 +13,21 @@ import {
 import AddRoutine from "./AddRoutine";
 import { FormTextInput } from "./FormTextInput";
 import { Portal } from "react-native-portalize";
-import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { isWeb, TAB_HEIGHT, vibrate } from "./utils";
 import {
-  Text,
-  View,
   StyleSheet,
-  FlatList,
   LayoutAnimation,
-  TouchableOpacity,
+  useColorScheme,
   Platform,
   UIManager,
 } from "react-native";
 import Animated from "react-native-reanimated";
-import SwipeableItem, { UnderlayParams } from "react-native-swipeable-item";
+import { UnderlayParams } from "react-native-swipeable-item";
 import AutocompleteDropdown from "./AutocompleteDropdown";
 // this is based on react-native-draggable-flatlist with some modifications to fix errors and improve performance
-import DraggableFlatList, { RenderItemParams } from "./draggable-list";
+import DraggableFlatList from "./draggable-list";
 import { Modalize } from "react-native-modalize";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SwipeItem, SwipeUnderlay } from "./SwipeItem";
 
 const { multiply, sub } = Animated;
@@ -163,15 +156,14 @@ export default ({
     update(editModalState.index, { ...editModalState, ...formRoutine() });
     resetForm();
   };
-
-  const itemRefs = new Map();
+  const scheme = useColorScheme();
   const [editModalState, setEditModalState] = useState(null);
   const modalizeRef = useRef<Modalize>(null);
   const editItem = (item: Item) => {
     modalizeRef.current?.open();
     setEditModalState(item);
   };
-  const [statusStyle, setStatusStyle] = useState("dark-content");
+  const [statusStyle, setStatusStyle] = useState("default");
 
   const deleteItem = (item: Item) => {
     // Animate list to close gap when item is deleted
@@ -196,41 +188,6 @@ export default ({
     </Animated.View>
   );
 
-  const renderItem = ({ item, index, drag }: RenderItemParams<Item>) => {
-    const newItem: Item = { ...item, index: index };
-    return (
-      <SwipeableItem
-        key={item.key}
-        item={newItem}
-        ref={(ref: any) => {
-          if (ref && !itemRefs.get(item.key)) {
-            itemRefs.set(item.key, ref);
-          }
-        }}
-        overSwipe={50}
-        renderUnderlayLeft={renderUnderlayLeft}
-        snapPointsLeft={[50, 100]}
-      >
-        <Box
-          style={[
-            styles.row,
-            { backgroundColor: item.backgroundColor, height: item.height },
-          ]}
-        >
-          <TouchableOpacity style={styles.dragHandle} onPressIn={drag}>
-            <MaterialCommunityIcons name="drag" size={24} color="white" />
-          </TouchableOpacity>
-          {Boolean(item.cycleCount >= 1) && (
-            <Text style={styles.cycles}>{`${item.cycleCount} Cycles`}</Text>
-          )}
-          <TouchableOpacity onPress={(e) => editItem(newItem)}>
-            <Text style={styles.text}>{item.name}</Text>
-          </TouchableOpacity>
-        </Box>
-      </SwipeableItem>
-    );
-  };
-  console.log(statusStyle);
   const insets = useSafeAreaInsets();
 
   return (
@@ -251,7 +208,7 @@ export default ({
             setStatusStyle("light-content");
           }}
           onClose={() => {
-            setStatusStyle("dark-content");
+            setStatusStyle("default");
           }}
           handleStyle={{
             top: 13,
@@ -260,9 +217,25 @@ export default ({
             backgroundColor: "#bcc0c1",
           }}
           ref={modalizeRef}
+          modalStyle={{
+            zIndex: 5,
+
+            marginTop: "auto",
+
+            backgroundColor: scheme === "dark" ? "#333" : "#fff",
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+
+            elevation: 4,
+          }}
           panGestureAnimatedValue={animated}
         >
-          <Box>
+          <>
             <HStack justifyContent="space-between">
               <Button
                 size="lg"
@@ -284,7 +257,7 @@ export default ({
             ) : (
               <Text>Loading...</Text>
             )}
-          </Box>
+          </>
         </Modalize>
       </Portal>
       <Box m={2} mt={0}>
@@ -380,7 +353,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontWeight: "bold",
-    color: "white",
+    color: "#eee",
     fontSize: 32,
   },
   cycles: {
@@ -388,18 +361,6 @@ const styles = StyleSheet.create({
     left: 5,
     color: "lightgrey",
     fontSize: 16,
-  },
-  red: {
-    color: "white",
-    backgroundColor: "red",
-    width: 50,
-    height: "100%",
-  },
-  blue: {
-    color: "white",
-    backgroundColor: "blue",
-    width: 50,
-    height: "100%",
   },
   underlayLeft: {
     flex: 1,

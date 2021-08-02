@@ -1,39 +1,31 @@
-import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
-import { Text, View } from "react-native";
+import { View, Select, CheckIcon } from "native-base";
 import React from "react";
 
 export default ({ field, set }) => {
+  const types = [
+    "My Activities",
+    "Meditation",
+    "Chores",
+    "Fitness",
+    "Daily Routines",
+    "Special Occasions",
+  ];
+  const label = "Select the type of routine you're creating";
   return (
-    <View>
-      <AutocompleteDropdown
-        clearOnFocus={false}
-        closeOnBlur={true}
-        closeOnSubmit={false}
-        onSelectItem={(item) => {
-          if (item?.title) {
-            set(field.name, item.title);
-          }
-        }}
-        textInputProps={{
-          placeholder: "Choose a type",
-          onBlur: field.onBlur,
-          onChange: field.onChange,
-          autoCorrect: false,
-          autoCapitalize: "none",
-          style: {
-            paddingLeft: 18,
-            borderRadius: 4,
-          }
-        }}
-        dataSet={[
-          { id: "1", title: "My Activities" },
-          { id: "2", title: "Meditation" },
-          { id: "3", title: "Chores" },
-          { id: "4", title: "Fitness" },
-          { id: "5", title: "Daily Routines" },
-          { id: "6", title: "Special Occasions" },
-        ]}
-      />
-    </View>
+    <Select
+      selectedValue={field.value}
+      minWidth={200}
+      accessibilityLabel={label}
+      placeholder={label}
+      onValueChange={(itemValue) => set(field.name, itemValue)}
+      _selectedItem={{
+        bg: "cyan.600",
+        endIcon: <CheckIcon size={4} />,
+      }}
+    >
+      {types.map((item, index) => (
+        <Select.Item key={index} value={item} label={item} />
+      ))}
+    </Select>
   );
 };

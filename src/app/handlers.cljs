@@ -14,7 +14,6 @@
 (defn log
   ([message] (log message {}))
   ([message data]
-   (js/console.log message data)
    (when-not c/web?
      (.track c/analytics message (clj->js data)))
    nil))
@@ -35,6 +34,7 @@
    :after (fn [context]
             (when-let [value (get-in context
                                      [:effects :db :persisted-state])]
+              (prn "storing" (prn-str value))
               (store-key "@db" (prn-str value)))
             context)))
 
@@ -95,16 +95,6 @@
               :dispatch [:start-routine
                          routine
                          (inc idx)]}])]}))
-
-
-
-(defn init
-  [db [_ version routines]]
-  (let [routines (when (nil? (get-in routines [:persisted-state :my-routines]))
-                   routines)]
-    (-> db
-        (assoc-in [:persisted-state :my-routines] routines)
-        (assoc :version version))))
 
 (defn timeout-fn
   [key fn]
@@ -201,7 +191,7 @@
                                             left
                                             " left to go!"))))]
                  (log "sending" #js [idx (:name next-activity) message " in " (/ trigger-time 1000)] )
-                 c/register-notifications
+                 (c/register-notifications)
                  (c/send-notification (clj->js (assoc next-activity :message message)) (/ trigger-time 1000))))))
          activities))))))
 
@@ -244,6 +234,26 @@
      "re-frame: ignoring bad :dispatch-later value:" effect)
     (.set timeout key #(rf/dispatch dispatch) ms)))
 
+(defn edit-routine
+  [{:keys [db]} [_ form-data]]
+  (let [data (js->clj form-data :keywordize-keys true)
+        current-routines (get-in db [:persisted-state :my-routines])
+        existing-routine-index (p/find-index current-routines {:id (:id data)})]
+    (prn existing-routine-index)))
+
+(defn delete-routine
+  [{:keys [db]} [_ form-data]]
+  (let [data (js->clj form-data :keywordize-keys true)
+        current-routines (->> [:persisted-state :my-routines]
+                              (get-in db)
+                              (remove nil?))
+        existing-routine-index (p/find-index current-routines {:id (:id data)})]
+    (when existing-routine-index
+      {:db (assoc-in
+            db [:persisted-state :my-routines
+                existing-routine-index]
+            nil)})))
+
 (defn add-routine
   [{:keys [db]} [_ form-data]]
   (let [data (js->clj form-data :keywordize-keys true)
@@ -270,7 +280,7 @@
                            (if (pos? processed-duration)
                              processed-duration
                              false)))))))
-        routine {:id (or (:id data) (gensym (:routineName data)))
+        routine {:id (str (or (:id data) (gensym (:routineName data))))
                  :name (:routineName data)
                  :type (if (seq type) type "My Routines")
                  :activities (parse-routines (:routines data))}
@@ -328,6 +338,7 @@
 (rf/reg-event-fx :stop [base-interceptors] stop)
 (rf/reg-event-fx :navigate [base-interceptors] navigate)
 (rf/reg-event-fx :add-routine [base-interceptors] add-routine)
+(rf/reg-event-fx :edit-routine [base-interceptors] edit-routine)
+(rf/reg-event-fx :delete-routine [base-interceptors] delete-routine)
 (rf/reg-event-fx :update-activity [base-interceptors] update-activity)
-(rf/reg-event-db :init [base-interceptors] init)
 (rf/reg-event-db :wipe-db [base-interceptors] (fn [_ _] {:persisted-state {}}))
