@@ -29,9 +29,16 @@ export const SwipeUnderlay = ({ bg, pressFn, iconName }) => {
   );
 };
 
-export const SwipeItem = ({ item, section, index, drag, renderUnderlayLeft, handlePress }) => {
+export const SwipeItem = ({
+  item,
+  section,
+  index,
+  drag,
+  renderUnderlayLeft,
+  handlePress,
+}) => {
   const itemRefs = new Map();
-  const newItem = { ...item, index };  
+  const newItem = { ...item, index };
   const isLast = index === section?.data?.length - 1;
   return (
     <SwipeableItem
@@ -46,25 +53,28 @@ export const SwipeItem = ({ item, section, index, drag, renderUnderlayLeft, hand
       renderUnderlayLeft={renderUnderlayLeft}
       snapPointsLeft={[50, 100]}
     >
-      <Box
-        style={[
-          styles.row,
-          (isLast && !item.height && styles.lastRow),
-          { backgroundColor: item.backgroundColor || COLOR_ACCENT, height: item.height || 80 },
-        ]}
-      >
-        {Boolean(drag) && (
-          <TouchableOpacity style={styles.dragHandle} onPressIn={drag}>
-            <MaterialCommunityIcons name="drag" size={24} color="white" />
-          </TouchableOpacity>
-        )}
-        {Boolean(item?.cycleCount && item.cycleCount >= 1) && (
-          <Text style={styles.cycles}>{`${item.cycleCount} Cycles`}</Text>
-        )}
-        <TouchableOpacity onPress={(e) => handlePress(newItem)}>
+      <TouchableOpacity onPress={(e) => handlePress(newItem)}>
+        <Box
+          style={[
+            styles.row,
+            isLast && !item.height && styles.lastRow,
+            {
+              backgroundColor: item.backgroundColor || COLOR_ACCENT,
+              height: item.height || 60,
+            },
+          ]}
+        >
+          {Boolean(drag) && (
+            <TouchableOpacity style={styles.dragHandle} onPressIn={drag}>
+              <MaterialCommunityIcons name="drag" size={24} color="white" />
+            </TouchableOpacity>
+          )}
+          {Boolean(item?.cycleCount && item.cycleCount >= 1) && (
+            <Text style={styles.cycles}>{`${item.cycleCount} Cycles`}</Text>
+          )}
           <Text style={styles.text}>{item.name}</Text>
-        </TouchableOpacity>
-      </Box>
+        </Box>
+      </TouchableOpacity>
     </SwipeableItem>
   );
 };
@@ -78,14 +88,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   lastRow: {
-    borderBottomLeftRadius: 10,
-    backgroundColor: "red",
-    borderBottomRightRadius: 10,
+    marginBottom: 15,
   },
   text: {
     fontWeight: "bold",
     color: "white",
-    fontSize: 32,
+    fontSize: 24,
   },
   cycles: {
     position: "absolute",

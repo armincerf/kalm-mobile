@@ -76,8 +76,6 @@ const Routines = ({
         )}
         renderSectionHeader={({ section: { title } }) => (
           <Box
-            borderTopRadius={10}
-            mt={2}
             px={5}
             py={2}
             _light={{ bg: "white", _text: { color: "black" } }}
