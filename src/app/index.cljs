@@ -30,11 +30,11 @@
       tailwind-rn
       (js->clj :keywordize-keys true)))
 
-(defn screen-main [props]
-  (let [{:keys [id]} (edn/read-string (.-props (.-params ^js (:route props))))
+(defn screen-main [_props]
+  (let [{:keys [id] :as routine} @(rf/subscribe [:current-routine])
         current-activity @(rf/subscribe [:persisted-state [id :current-activity]])
         running? (not (empty? current-activity))]
-    [views/routine-player props current-activity running?]))
+    [views/routine-player routine current-activity running?]))
 
 (def stack (rn-stack/createStackNavigator))
 
@@ -56,38 +56,38 @@
     [:> NativeBaseProvider
      {:theme customTheme}
      [:> nav/NavigationContainer
-        {:ref (fn [el] (reset! !navigation-ref el))
-         :theme (if dark-mode?
-                  (j/assoc-in!
-                   nav/DarkTheme
-                   [:colors :background]
-                   "rgb(39, 39, 42)")
-                  nav/DefaultTheme)
-         :on-ready (fn []
-                     (swap! !route-name-ref merge
-                            {:current (-> @!navigation-ref
-                                          (j/call :getCurrentRoute)
-                                          (j/get :name))}))
-         :on-state-change
-         (fn []
-           (let [prev-route-name (-> @!route-name-ref :current)
-                 current-route-name (-> @!navigation-ref
+      {:ref (fn [el] (reset! !navigation-ref el))
+       :theme (if dark-mode?
+                (j/assoc-in!
+                 nav/DarkTheme
+                 [:colors :background]
+                 "rgb(39, 39, 42)")
+                nav/DefaultTheme)
+       :on-ready (fn []
+                   (swap! !route-name-ref merge
+                          {:current (-> @!navigation-ref
                                         (j/call :getCurrentRoute)
-                                        (j/get :name))]
-             (when (not= prev-route-name current-route-name)
+                                        (j/get :name))}))
+       :on-state-change
+       (fn []
+         (let [prev-route-name (-> @!route-name-ref :current)
+               current-route-name (-> @!navigation-ref
+                                      (j/call :getCurrentRoute)
+                                      (j/get :name))]
+           (when (not= prev-route-name current-route-name)
                ;; This is where you can do side effecty things like analytics
-               (when (routine? current-route-name)
-                 (let [id (-> @!navigation-ref
-                              (j/call :getCurrentRoute)
-                              (j/get-in [:params :props])
-                              (edn/read-string)
-                              :id)]
-                   (rf/dispatch [:save-time-left id])))
-               (when (routine? (:name page))
-                 (let [id (-> page :props :id)]
-                   (rf/dispatch [:save-time-left id])))
-               (.screen c/analytics current-route-name))
-             (swap! !route-name-ref merge {:current current-route-name})))}
+             (when (routine? current-route-name)
+               (let [id (-> @!navigation-ref
+                            (j/call :getCurrentRoute)
+                            (j/get-in [:params :props])
+                            (edn/read-string)
+                            :id)]
+                 (rf/dispatch [:save-time-left id])))
+             (when (routine? (:name page))
+               (let [id (-> page :props :id)]
+                 (rf/dispatch [:save-time-left id])))
+             (.screen c/analytics current-route-name))
+           (swap! !route-name-ref merge {:current current-route-name})))}
       [:> Host
        ;;black view only visible when modal opens
        [:> rn/View {:style {:flex 1 :backgroundColor "#000"}}

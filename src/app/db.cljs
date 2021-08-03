@@ -11,15 +11,15 @@
   {:name "Push ups"
    :description "Hold arms in good way and push in the up direction"
    :pre-activity [{:name "Get in the position"
-                   :image "https://www.memecreator.org/static/images/memes/4789102.jpg"}]
+                   :image {:still "https://www.memecreator.org/static/images/memes/4789102.jpg"}}]
    :activities [{:name "Push down"
                  :duration 2000
-                 :image "https://www.wikihow.com/images/thumb/5/53/Do-a-Push-Up-Step-15-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-15-Version-3.jpg"}
+                 :image {:still "https://www.wikihow.com/images/thumb/5/53/Do-a-Push-Up-Step-15-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-15-Version-3.jpg"}}
                 {:name "Push up"
-                 :image "https://www.wikihow.com/images/thumb/9/98/Do-a-Push-Up-Step-13-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-13-Version-3.jpg"
+                 :image {:still "https://www.wikihow.com/images/thumb/9/98/Do-a-Push-Up-Step-13-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-13-Version-3.jpg"}
                  :duration 1000}]
    :post-activity [{:name "Nice work! Go eat a cake"
-                    :image "https://memegenerator.net/img/instances/45717809.jpg"}]})
+                    :image {:still "https://memegenerator.net/img/instances/45717809.jpg"}}]})
 
 (def jumping-jacks
   {:name "Jumping Jacks"
@@ -27,7 +27,7 @@
    :activities [{:name "Jump as much as you can in the time limit, also do some jacks."
                  :duration 100000000
 
-                 :image "https://media1.tenor.com/images/1c91aac996db1dec02eac2ddbd86ad30/tenor.gif"}]})
+                 :image {:still "https://media1.tenor.com/images/1c91aac996db1dec02eac2ddbd86ad30/tenor.gif"}}]})
 
 (def my-activity
   {:name "Morning Routine"

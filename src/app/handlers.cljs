@@ -34,7 +34,6 @@
    :after (fn [context]
             (when-let [value (get-in context
                                      [:effects :db :persisted-state])]
-              (prn "storing" (prn-str value))
               (store-key "@db" (prn-str value)))
             context)))
 
@@ -63,7 +62,7 @@
 (defn resume-routine
   [{:keys [db]} [_ id]]
   (let [idx (inc (get-in db [:persisted-state id :current-idx]))
-        routine (get-in db [:state id :current-routine])]
+        routine (get-in db [:state :current-routine])]
     (if (and idx routine)
       {:fx [[:notifs/cancel!]
             [:dispatch [:start-routine routine idx]]]
@@ -72,7 +71,7 @@
 
 (defn start-routine
   [{:keys [db]} [_ {:keys [id]} idx]]
-  (let [routine (get-in db [:state id :current-routine])
+  (let [routine (get-in db [:state :current-routine])
         activities (vec (:activities routine))
         activity (get activities idx)]
     (log "start activity" name)
@@ -208,7 +207,7 @@
  [base-interceptors]
  (fn [{:keys [db]} [_ routine-id]]
    (let [idx (get-in db [:persisted-state routine-id :current-idx])
-         activities (get-in db [:state routine-id :current-routine :activities])
+         activities (get-in db [:state :current-routine :activities])
          path [:persisted-state routine-id :scheduled?]]
      (if (get-in db path)
        (log "already scheduled" routine-id)
@@ -299,7 +298,7 @@
   [{:keys [db]} [_ navigation route props]]
   (let [db
         (if (routine? route)
-          (assoc-in db [:state (:id props) :current-routine] props)
+          (assoc-in db [:state :current-routine] props)
           db)]
     {:fx [[:navigate! [navigation route props]]]
      :db (assoc db
@@ -309,8 +308,8 @@
 
 (defn update-activity
   [{:keys [db]} [_ activity index]]
+  (def db db)
   {:db (update-in db [:state
-                      (get-in db [:current-page :props :id])
                       :current-routine
                       :activities
                       index] merge activity)})
@@ -342,3 +341,7 @@
 (rf/reg-event-fx :delete-routine [base-interceptors] delete-routine)
 (rf/reg-event-fx :update-activity [base-interceptors] update-activity)
 (rf/reg-event-db :wipe-db [base-interceptors] (fn [_ _] {:persisted-state {}}))
+
+(rf/reg-event-db :add-current-routine [base-interceptors] (fn [db [_ routine]]
+                                                            (def routine routine)
+                                                            (assoc-in db [:state :current-routine] routine)))

@@ -24,6 +24,7 @@
         "expo-haptics": "~10.1.0",
         "expo-notifications": "~0.12.3",
         "expo-task-manager": "~9.2.2",
+        "humanize-duration": "^3.27.0",
         "native-base": "^3.0.6",
         "react": "16.13.1",
         "react-dom": "16.13.1",

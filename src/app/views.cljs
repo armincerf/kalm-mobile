@@ -154,24 +154,28 @@
                                                                           :err err}))))))
 
 (defn routine-player
-  [{:keys [route]} _ _]
-  (let [{:keys [id name description activities] :as routine}
-        (edn/read-string (.-props (.-params route)))
-        show-preview? (r/atom false)]
-    (r/create-class
-     {:component-did-mount
-      (fn []
-        (doall
-         (map-indexed
-          (fn [idx activity]
-            (add-random-activity-image activity idx))
-          activities)))
-      :reagent-render
-      (fn [_ current-activity running?]
-        (let [no-duration?
-              (and current-activity
-                   (not (:duration current-activity)))]
-          [:<>
+  [{:keys [activities]} _ _]
+  (r/create-class
+   {:component-did-mount
+    (fn []
+      (doall
+       (map-indexed
+        (fn [idx activity]
+          (add-random-activity-image activity idx))
+        activities)))
+    :reagent-render
+    (fn [routine current-activity running?]
+      (let [no-duration?
+            (and current-activity
+                 (not (:duration current-activity)))]
+        (when routine
+          [:> c/RoutinePlayer {:noDuration no-duration?
+                               :currentActivity current-activity
+                               :routine routine
+                               :isRunning running?}])))}))
+
+(comment
+  [:<>
            [:> Box
             {:py 2
              :px 2
@@ -222,7 +226,7 @@
             (when current-activity
               [activity-view current-activity])]
            (when @show-preview?
-             [routine-view routine])]))})))
+             [routine-view routine])])
 
 (defn gen-routine
   [root-activity]

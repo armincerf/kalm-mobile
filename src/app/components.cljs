@@ -13,7 +13,10 @@
 
 (def AddRoutineButton (.-default (js/require "../src/stories/AddRoutineButton.jsx")))
 
+
 (def utils (js/require "../src/stories/utils.ts"))
+
+(def RoutinePlayer (.-default (js/require "../src/stories/RoutinePlayer.tsx")))
 
 (def analytics (.-default (js/require "../src/stories/analytics.js")))
 (def get-name (.-getName utils))

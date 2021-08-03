@@ -20,6 +20,11 @@
    (:current-page db)))
 
 (rf/reg-sub
+ :current-routine
+ (fn [db _]
+   (get-in db [:state :current-routine])))
+
+(rf/reg-sub
  :paused?
  (fn [db [_ id]]
    (let [id (or id (get-in db [:current-page :props :id]))]
