@@ -28,7 +28,7 @@
 (def text (r/adapt-react-class Text))
 
 (defn countdown-display
-  [{:keys [duration name cycle-idx]} preview? paused?]
+  [{:keys [duration name cycleIdx]} preview? paused?]
   (let [time-left @(rf/subscribe [:time-left])
         duration (or (and (not preview?) time-left) duration)
         scheme (rn/useColorScheme)]
@@ -36,7 +36,7 @@
      [countdown
       {:isPlaying (boolean (and (not preview?)
                                 (not paused?)))
-       :key (str name " " cycle-idx)
+       :key (str name " " cycleIdx)
        :duration (js/Math.round (/ duration 1000))
        :colors (if (= "dark" scheme)
                  [["#22D3EE" 0.4]
@@ -74,7 +74,7 @@
 
 (defn activity-view
   ([activity] (activity-view activity false))
-  ([{:keys [name subtitle description image feeling cycle-idx total-cycles] :as activity} preview?]
+  ([{:keys [name subtitle description image feeling cycleIdx total-cycles] :as activity} preview?]
    (let [paused? @(rf/subscribe [:paused?])]
      [:> Box
       {:m 5
@@ -96,8 +96,8 @@
             (image-tag (:still image))
             (not paused?)
             (image-tag (:gif image)))))
-      (when (and cycle-idx (> cycle-idx 1) total-cycles)
-        [:> Heading (str "Cycle number " cycle-idx " out of " total-cycles)])
+      (when (and cycleIdx (> cycleIdx 1) total-cycles)
+        [:> Heading (str "Cycle number " cycleIdx " out of " total-cycles)])
       [:> Center
        [:> Heading
         {:size ["md" "lg" "md"]
@@ -114,7 +114,7 @@
     (when (seq sectioned-activities)
       [:> SectionList
        {:sections [{:title "Section" :data sectioned-activities}]
-        :keyExtractor (fn [^js activity] (str (j/get activity :id) (or (j/get activity :cycle-idx) 0)))
+        :keyExtractor (fn [^js activity] (str (j/get activity :id) (or (j/get activity :cycleIdx) 0)))
         :renderItem #(r/as-element (activity-view (js->clj (.-item %) :keywordize-keys true) true))}])))
 
 (defn no-duration-button
@@ -234,7 +234,7 @@
         (fn [activities cycle-count]
           (for [cycle (range cycle-count)]
             (map
-             #(assoc % :cycle-idx (inc cycle) :total-cycles cycle-count)
+             #(assoc % :cycleIdx (inc cycle) :total-cycles cycle-count)
              activities)))
         gen-activity
         (fn [props]

@@ -61,8 +61,11 @@
                 (j/assoc-in!
                  nav/DarkTheme
                  [:colors :background]
-                 "rgb(39, 39, 42)")
-                nav/DefaultTheme)
+                 "black")
+                (j/assoc-in!
+                 nav/DefaultTheme
+                 [:colors :background]
+                 "white"))
        :on-ready (fn []
                    (swap! !route-name-ref merge
                           {:current (-> @!navigation-ref
@@ -103,7 +106,8 @@
                      :component (r/reactify-component
                                  #(views/routines % animated))})
             (screen {:name "Routine"
-                     :options {:title (or (:name routine) "Routine")}
+                     :options {:title (or (:name routine) "Routine")
+                               :headerTintColor "#dc2626"}
                      :component (r/reactify-component screen-main)})]])]]]]))
 
 (defn start

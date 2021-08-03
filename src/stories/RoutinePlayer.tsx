@@ -1,4 +1,5 @@
 import React from "react";
+import { FontAwesome5 } from "@expo/vector-icons";
 import {
   Box,
   Button,
@@ -16,7 +17,7 @@ import {
   VStack,
   HStack,
 } from "native-base";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { StyleSheet, TouchableOpacity, Dimensions } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AddRoutines from "./AddRoutines";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
@@ -38,7 +39,7 @@ export const PlayListView = ({
   handleStart,
   handleShuffle,
 }) => {
-  const { name, description, totalTime, activities } = routine;
+  const { name, description, totalTime, activities, type } = routine;
   const data = [
     {
       id: "bd7acbea-c1b1-46c2-aed5-3ad53abb28ba",
@@ -54,104 +55,180 @@ export const PlayListView = ({
     },
   ];
 
-  const secondsText =
-    humanizeDuration(totalTime, { delimiter: " " }) + " total";
-  return (
-    <FlatList
-      data={data}
-      ListHeaderComponent={() => (
-        <>
-          <Center>
-            <Box
-              bg="black"
-              w={250}
-              h={250}
-              shadow={9}
-              borderRadius={5}
-              mt={2}
-              mb={15}
-            >
-              {Boolean(activities.length > 3) ? (
-                <VStack>
-                  <HStack>
+  const playerHeader = (
+    <>
+      <Center key="image">
+        <Box
+          bg="black"
+          w={250}
+          h={250}
+          shadow={9}
+          borderRadius={5}
+          mt={2}
+          mb={15}
+        >
+          {Boolean(activities.length > 3) ? (
+            <VStack>
+              <HStack>
+                <Image
+                  width={125}
+                  height={125}
+                  resizeMode="stretch"
+                  borderTopLeftRadius={5}
+                  alt={activities[0].name}
+                  source={{ uri: activities[0]?.image?.still }}
+                />
+                {Boolean(activities.length > 1) && (
+                  <Image
+                    height={125}
+                    width={125}
+                    resizeMode="stretch"
+                    borderTopRightRadius={5}
+                    alt={activities[1].name}
+                    source={{ uri: activities[1]?.image?.still }}
+                  />
+                )}
+              </HStack>
+              {Boolean(activities.length > 2) && (
+                <HStack>
+                  <Image
+                    width={125}
+                    height={125}
+                    resizeMode="stretch"
+                    borderBottomLeftRadius={5}
+                    alt={activities[2].name}
+                    source={{ uri: activities[2]?.image?.still }}
+                  />
+                  {Boolean(activities.length > 3) && (
                     <Image
                       width={125}
                       height={125}
                       resizeMode="stretch"
-                      borderTopLeftRadius={5}
-                      alt={activities[0].name}
-                      source={{ uri: activities[0]?.image?.still }}
+                      borderBottomRightRadius={5}
+                      alt={activities[3].name}
+                      source={{ uri: activities[3]?.image?.still }}
                     />
-                    {Boolean(activities.length > 1) && (
-                      <Image
-                        height={125}
-                        width={125}
-                        resizeMode="stretch"
-                        borderTopRightRadius={5}
-                        alt={activities[1].name}
-                        source={{ uri: activities[1]?.image?.still }}
-                      />
-                    )}
-                  </HStack>
-                  {Boolean(activities.length > 2) && (
-                    <HStack>
-                      <Image
-                        width={125}
-                        height={125}
-                        resizeMode="stretch"
-                        borderBottomLeftRadius={5}
-                        alt={activities[2].name}
-                        source={{ uri: activities[2]?.image?.still }}
-                      />
-                      {Boolean(activities.length > 3) && (
-                        <Image
-                          width={125}
-                          height={125}
-                          resizeMode="stretch"
-                          borderBottomRightRadius={5}
-                          alt={activities[3].name}
-                          source={{ uri: activities[3]?.image?.still }}
-                        />
-                      )}
-                    </HStack>
                   )}
-                </VStack>
-              ) : (
-                <Image
-                  width={250}
-                  height={250}
-                  resizeMode="stretch"
-                  borderRadius={5}
-                  alt={activities[0].name}
-                  source={{ uri: activities[0]?.image?.still }}
-                />
+                </HStack>
               )}
-            </Box>
-            <Heading size="lg">{name}</Heading>
-            <Text fontSize="lg">{description}</Text>
-          </Center>
-          <HStack justifyContent="space-between" my={4}>
-            <Button w="45%" onPress={handleStart}>
-              Play
-            </Button>
-            <Button w="45%" onPress={handleShuffle}>
-              Shuffle
-            </Button>
-          </HStack>
-        </>
-      )}
+            </VStack>
+          ) : (
+            <Image
+              width={250}
+              height={250}
+              resizeMode="stretch"
+              borderRadius={5}
+              alt={activities[0].name}
+              source={{ uri: activities[0]?.image?.still }}
+            />
+          )}
+        </Box>
+        <Heading size="lg">{name}</Heading>
+        <Text fontSize="lg" color="red.600">
+          {description}
+        </Text>
+        <Text
+          fontSize="xs"
+          py={2}
+          color="gray.500"
+          fontWeight="bold"
+          textTransform="uppercase"
+        >
+          {type}
+        </Text>
+      </Center>
+      <HStack key="buttons" justifyContent="space-between" my={4}>
+        <Button
+          startIcon={<FontAwesome5 name="play" size={16} color="red" />}
+          w="45%"
+          bg="gray.800"
+          onPress={handleStart}
+        >
+          <Text color="red.600">Play</Text>
+        </Button>
+        <Button
+          w="45%"
+          bg="gray.800"
+          startIcon={<FontAwesome5 name="random" size={16} color="red" />}
+          onPress={handleShuffle}
+        >
+          <Text color="red.600">Shuffle</Text>
+        </Button>
+      </HStack>
+    </>
+  );
+
+  const secondsText =
+    humanizeDuration(totalTime, { delimiter: " " }) + " total";
+
+  return (
+    <FlatList
+      data={activities}
+      ListHeaderComponent={playerHeader}
       ListFooterComponent={() => (
         <Text
           my={3}
           color="gray.500"
         >{`${activities.length} activities, ${secondsText}`}</Text>
       )}
+      ItemSeparatorComponent={() => (
+        <Divider
+          width={Dimensions.get("window").width - 105}
+          alignSelf="flex-end"
+        />
+      )}
       renderItem={({ item }) => (
-        <Box px={5} py={2} rounded="md" my={2} bg="primary.300">
-          {item.title}
+        <Box>
+          <HStack justifyContent="space-between" alignItems="center">
+            <HStack>
+              <Box
+                bg="black"
+                my={2}
+                w="53px"
+                h="53px"
+                justifyContent="center"
+                alignItems="center"
+                borderRadius={5}
+                shadow={5}
+              >
+                {item.image ? (
+                  <Image
+                    w="53px"
+                    h="53px"
+                    resizeMode="stretch"
+                    borderRadius={5}
+                    alt={item.name}
+                    source={{ uri: item.image?.still }}
+                  />
+                ) : (
+                  <FontAwesome5 name="tasks" size={40} p={5} color="white" />
+                )}
+              </Box>
+
+              <VStack
+                py={1}
+                px={4}
+                alignItems="flex-start"
+                justifyContent="center"
+                w="70%"
+              >
+                <Text isTruncated fontSize="lg"> {item.name} </Text>
+                {Boolean(item.description) && (
+                  <Text isTruncated fontSize="sm" paddingLeft="4px" color="gray.500">
+                    {item.description}
+                  </Text>
+                )}
+              </VStack>
+            </HStack>
+            {Boolean(item?.duration && item.duration > 0) && (
+              <Text fontSize="xs" color="gray.500">
+                {new Date(item.duration).toISOString().substr(11, 8)}
+              </Text>
+            )}
+          </HStack>
         </Box>
       )}
-      keyExtractor={(item) => item.id}
+      keyExtractor={({ name, cycleIdx, index }) => name + cycleIdx + index}
     />
   );
 };

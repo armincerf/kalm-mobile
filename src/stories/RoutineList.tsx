@@ -79,7 +79,7 @@ const Routines = ({
             px={5}
             py={2}
             _light={{ bg: "white", _text: { color: "black" } }}
-            _dark={{ bg: "black", _text: { color: "white" } }}
+            _dark={{ bg: "gray.800", _text: { color: "white" } }}
             _text={{
               fontSize: 14,
             }}
