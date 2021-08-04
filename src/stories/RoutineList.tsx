@@ -41,7 +41,7 @@ const renderUnderlayLeft = (
     />
     <SwipeUnderlay
       bg="primary.600"
-      pressFn={() => editddd(item)}
+      pressFn={() => edit(item)}
       iconName="edit"
     />
   </Animated.View>

@@ -15,6 +15,8 @@
 
 
 (def utils (js/require "../src/stories/utils.ts"))
+(def accent (.-COLOR_ACCENT utils))
+(def highlight (.-COLOR_HIGHLIGHT utils))
 
 (def RoutinePlayer (.-default (js/require "../src/stories/RoutinePlayer.tsx")))
 

@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Button, useColorMode } from "native-base";
-import React from "react";
+import React, { useEffect } from "react";
+import { StyleProp, ViewStyle } from "react-native";
 import {
   View,
   Text,
@@ -20,10 +21,14 @@ export function TabBar({ state, descriptors, navigation }) {
   if (focusedOptions.tabBarVisible === false) {
     return null;
   }
-  //because for some reason native base doesn't switch to the correct color mode automatically
-  if (scheme !== colorMode) {
-    toggleColorMode();
-  }
+
+  useEffect(() => {
+    //silly hack because of some reagent weirdness with hooks :/
+    if (scheme !== colorMode) {
+      toggleColorMode();
+    }
+  }, [scheme]);
+
   return (
     <BlurView
       intensity={100}
@@ -66,7 +71,7 @@ export function TabBar({ state, descriptors, navigation }) {
             : scheme === "dark"
             ? "#eee"
             : "#222";
-          const tabStyle = isMiddle
+          const tabStyle: StyleProp<ViewStyle> = isMiddle
             ? {
                 alignItems: "center",
                 justifyContent: "center",

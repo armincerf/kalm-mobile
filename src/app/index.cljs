@@ -107,7 +107,9 @@
                                  #(views/routines % animated))})
             (screen {:name "Routine"
                      :options {:title (or (:name routine) "Routine")
-                               :headerTintColor "#dc2626"}
+                               :headerTintColor (if dark-mode?
+                                                  c/highlight
+                                                  c/accent)}
                      :component (r/reactify-component screen-main)})]])]]]]))
 
 (defn start

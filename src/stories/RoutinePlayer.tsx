@@ -16,6 +16,7 @@ import {
   FlatList,
   VStack,
   HStack,
+  useColorModeValue,
 } from "native-base";
 import { StyleSheet, TouchableOpacity, Dimensions } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -40,21 +41,8 @@ export const PlayListView = ({
   handleShuffle,
 }) => {
   const { name, description, totalTime, activities, type } = routine;
-  const data = [
-    {
-      id: "bd7acbea-c1b1-46c2-aed5-3ad53abb28ba",
-      title: "First Item",
-    },
-    {
-      id: "3ac68afc-c605-48d3-a4f8-fbd91aa97f63",
-      title: "Second Item",
-    },
-    {
-      id: "58694a0f-3da1-471f-bd96-145571e29d72",
-      title: "Third Item",
-    },
-  ];
-
+  const bg = useColorModeValue('gray.200', 'gray.800');
+  const accent = useColorModeValue(COLOR_ACCENT, COLOR_HIGHLIGHT);
   const playerHeader = (
     <>
       <Center key="image">
@@ -124,7 +112,7 @@ export const PlayListView = ({
           )}
         </Box>
         <Heading size="lg">{name}</Heading>
-        <Text fontSize="lg" color="red.600">
+        <Text fontSize="lg" color={accent}>
           {description}
         </Text>
         <Text
@@ -139,20 +127,24 @@ export const PlayListView = ({
       </Center>
       <HStack key="buttons" justifyContent="space-between" my={4}>
         <Button
-          startIcon={<FontAwesome5 name="play" size={16} color="red" />}
+          startIcon={
+            <FontAwesome5 name="play" size={16} color={accent} />
+          }
           w="45%"
-          bg="gray.800"
+          bg={bg}
           onPress={handleStart}
         >
-          <Text color="red.600">Play</Text>
+          <Text color={accent}>Play</Text>
         </Button>
         <Button
           w="45%"
-          bg="gray.800"
-          startIcon={<FontAwesome5 name="random" size={16} color="red" />}
+          bg={bg}
+          startIcon={
+            <FontAwesome5 name="random" size={16} color={accent} />
+          }
           onPress={handleShuffle}
         >
-          <Text color="red.600">Shuffle</Text>
+          <Text color={accent}>Shuffle</Text>
         </Button>
       </HStack>
     </>
@@ -212,9 +204,17 @@ export const PlayListView = ({
                 justifyContent="center"
                 w="70%"
               >
-                <Text isTruncated fontSize="lg"> {item.name} </Text>
+                <Text isTruncated fontSize="lg">
+                  {" "}
+                  {item.name}{" "}
+                </Text>
                 {Boolean(item.description) && (
-                  <Text isTruncated fontSize="sm" paddingLeft="4px" color="gray.500">
+                  <Text
+                    isTruncated
+                    fontSize="sm"
+                    paddingLeft="4px"
+                    color="gray.500"
+                  >
                     {item.description}
                   </Text>
                 )}
