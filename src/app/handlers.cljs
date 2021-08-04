@@ -14,6 +14,7 @@
 (defn log
   ([message] (log message {}))
   ([message data]
+   (js/console.log message data)
    (when-not c/web?
      (.track c/analytics message (clj->js data)))
    nil))
@@ -59,9 +60,9 @@
   [db [_ path value]]
   (assoc-in db (cons :state path) value))
 
-(defn resume-routine
-  [{:keys [db]} [_ id]]
-  (let [idx (inc (get-in db [:persisted-state id :current-idx]))
+(defn skip-activity
+  [{:keys [db]} [_ id direction]]
+  (let [idx ((if (= :prev direction) dec inc) (get-in db [:persisted-state id :current-idx]))
         routine (get-in db [:state :current-routine])]
     (if (and idx routine)
       {:fx [[:notifs/cancel!]
@@ -70,11 +71,10 @@
       (rf/console :error "No routine to resume" id idx routine))))
 
 (defn start-routine
-  [{:keys [db]} [_ {:keys [id]} idx]]
-  (let [routine (get-in db [:state :current-routine])
-        activities (vec (:activities routine))
+  [{:keys [db]} [_ {:keys [id] :as routine} idx]]
+  (let [activities (vec (:activities routine))
         activity (get activities idx)]
-    (log "start activity" name)
+    (log "start routine2" (:name routine))
     {:db (-> db
              (assoc-in [:persisted-state id :current-idx] idx)
              (assoc-in [:persisted-state id :current-activity] activity)
@@ -328,7 +328,7 @@
        (dispatch-later effect)))))
 
 (rf/reg-event-fx :start-routine [base-interceptors] start-routine)
-(rf/reg-event-fx :resume-routine  resume-routine)
+(rf/reg-event-fx :skip-activity skip-activity)
 (rf/reg-event-db :set-state [base-interceptors] set-state)
 (rf/reg-event-db :initialize-db initialize-db)
 (rf/reg-event-fx :pause [base-interceptors] pause)

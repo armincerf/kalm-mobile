@@ -1,5 +1,6 @@
 (ns app.subscriptions
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            ["smart-timeout" :as timeout]))
 
 (defn version [db _] (:version db))
 (rf/reg-sub :version version)

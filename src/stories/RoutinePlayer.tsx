@@ -32,6 +32,8 @@ import { SwipeItem, SwipeUnderlay } from "./SwipeItem";
 import { UnderlayParams } from "react-native-swipeable-item";
 import Animated from "react-native-reanimated";
 import { TabBar } from "./TabBar";
+import SeekBar from "./SeekBar";
+import { Controls } from "./Controls";
 const humanizeDuration = require("humanize-duration");
 
 export const PlayListView = ({
@@ -39,10 +41,10 @@ export const PlayListView = ({
   routine,
   handleStart,
   handleShuffle,
+  bg,
+  accent,
 }) => {
   const { name, description, totalTime, activities, type } = routine;
-  const bg = useColorModeValue('gray.200', 'gray.800');
-  const accent = useColorModeValue(COLOR_ACCENT, COLOR_HIGHLIGHT);
   const playerHeader = (
     <>
       <Center key="image">
@@ -52,7 +54,7 @@ export const PlayListView = ({
           h={250}
           shadow={9}
           borderRadius={5}
-          mt={2}
+          mt={4}
           mb={15}
         >
           {Boolean(activities.length > 3) ? (
@@ -125,11 +127,9 @@ export const PlayListView = ({
           {type}
         </Text>
       </Center>
-      <HStack key="buttons" justifyContent="space-between" my={4}>
+      <HStack key="buttons" justifyContent="space-between" m={4}>
         <Button
-          startIcon={
-            <FontAwesome5 name="play" size={16} color={accent} />
-          }
+          startIcon={<FontAwesome5 name="play" size={16} color={accent} />}
           w="45%"
           bg={bg}
           onPress={handleStart}
@@ -139,9 +139,7 @@ export const PlayListView = ({
         <Button
           w="45%"
           bg={bg}
-          startIcon={
-            <FontAwesome5 name="random" size={16} color={accent} />
-          }
+          startIcon={<FontAwesome5 name="random" size={16} color={accent} />}
           onPress={handleShuffle}
         >
           <Text color={accent}>Shuffle</Text>
@@ -165,14 +163,14 @@ export const PlayListView = ({
       )}
       ItemSeparatorComponent={() => (
         <Divider
-          width={Dimensions.get("window").width - 105}
+          width={Dimensions.get("window").width - 90}
           alignSelf="flex-end"
         />
       )}
       renderItem={({ item }) => (
-        <Box>
-          <HStack justifyContent="space-between" alignItems="center">
-            <HStack>
+        <Box mx={4}>
+          <HStack w="100%" justifyContent="space-between" alignItems="center">
+            <HStack w="80%">
               <Box
                 bg="black"
                 my={2}
@@ -202,7 +200,7 @@ export const PlayListView = ({
                 px={4}
                 alignItems="flex-start"
                 justifyContent="center"
-                w="70%"
+                w="90%"
               >
                 <Text isTruncated fontSize="lg">
                   {" "}
@@ -220,11 +218,11 @@ export const PlayListView = ({
                 )}
               </VStack>
             </HStack>
-            {Boolean(item?.duration && item.duration > 0) && (
-              <Text fontSize="xs" color="gray.500">
-                {new Date(item.duration).toISOString().substr(11, 8)}
-              </Text>
-            )}
+            <Text fontSize="xs" color="gray.500">
+              {item?.duration
+                ? new Date(item.duration).toISOString().substr(11, 8)
+                : "Manual"}
+            </Text>
           </HStack>
         </Box>
       )}
@@ -233,10 +231,73 @@ export const PlayListView = ({
   );
 };
 
-export default (props) => {
+const Player = ({
+  currentActivity,
+  routine,
+  ...props
+}: {
+  currentActivity: any;
+  routine: any[];
+  duration: number;
+  isRunning: boolean;
+  hasNext: boolean;
+  hasPrev: boolean;
+  isPaused: boolean;
+  handleNext: () => void;
+  handlePlay: () => void;
+  handlePause: () => void;
+  handlePrev: () => void;
+  handleStop: () => void;
+}) => {
+  const bigImageSize = Dimensions.get("window").width * 0.6;
   return (
-    <Box p={4}>
-      <PlayListView {...props} />
+    <Box bg="black" height="100%">
+      <Center>
+        <VStack m={5}>
+          {Boolean(currentActivity?.image) && (
+            <Box shadow={9} alignSelf="center" w={bigImageSize} h={bigImageSize} bg="white">
+              <Image
+                resizeMode="stretch"
+                w={bigImageSize}
+                h={bigImageSize}
+                alt={currentActivity.name}
+                source={{
+                  uri: props.isPaused
+                    ? currentActivity.image?.still
+                    : currentActivity.image?.gif ||
+                      currentActivity.image?.still,
+                }}
+              />
+            </Box>
+          )}
+          <Heading color="white" mt={10}>
+            {currentActivity?.name}
+          </Heading>
+          <Text fontSize="lg" color={COLOR_HIGHLIGHT}>
+            {currentActivity?.description || "this is a test description"}
+          </Text>
+          {currentActivity?.duration && (
+            <Box my={5}>
+              <SeekBar
+                id={routine.id.toString()}
+                trackLength={currentActivity.duration}
+              />
+            </Box>
+          )}
+          <Controls {...props} id={routine.id} />
+        </VStack>
+      </Center>
     </Box>
+  );
+};
+
+export default (props) => {
+  const bg = useColorModeValue("gray.200", "gray.800");
+  const accent = useColorModeValue(COLOR_ACCENT, COLOR_HIGHLIGHT);
+
+  return Boolean(props.isRunning) ? (
+    <Player {...props} bg={bg} accent={accent} />
+  ) : (
+    <PlayListView {...props} bg={bg} accent={accent} />
   );
 };

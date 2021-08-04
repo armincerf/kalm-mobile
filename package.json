@@ -4,7 +4,6 @@
         "expo:watch": "EXPO_LEGACY_IMPORTS=1 expo start",
         "shadow:watch": "shadow-cljs watch app",
         "shadow:release": "shadow-cljs release app",
-
         "web": "EXPO_LEGACY_IMPORTS=1 expo start --web",
         "android": "EXPO_LEGACY_IMPORTS=1 expo start --android",
         "ios": "EXPO_LEGACY_IMPORTS=1 expo start --ios",
@@ -41,6 +40,7 @@
         "react-native-input-spinner": "^1.7.11",
         "react-native-modalize": "^2.0.8",
         "react-native-portalize": "^1.0.7",
+        "react-native-progress": "^5.0.0",
         "react-native-reanimated": "~2.2.0",
         "react-native-safe-area-context": "^3.2.0",
         "react-native-screens": "~3.4.0",

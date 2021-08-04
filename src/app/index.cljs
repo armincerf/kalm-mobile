@@ -4,6 +4,7 @@
    ["react-native-safe-area-context" :refer [SafeAreaProvider]]
    ["@react-navigation/stack" :as rn-stack]
    ["expo-constants" :as expo-constants]
+
    ["react-native" :as rn]
    ["tailwind-rn" :default tailwind-rn]
    ["native-base" :refer [NativeBaseProvider

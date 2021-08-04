@@ -122,7 +122,7 @@
   [:> Button
    {:size "sm"
     :m 3
-    :on-press #(rf/dispatch [:resume-routine id])}
+    :on-press #(rf/dispatch [:next-activity id])}
    (if @(rf/subscribe [:persisted-state [id :next-activity]])
      "Next Step"
      "Finish")])
@@ -168,11 +168,26 @@
       (let [no-duration?
             (and current-activity
                  (not (:duration current-activity)))]
-        (when routine
-          [:> c/RoutinePlayer {:noDuration no-duration?
-                               :currentActivity current-activity
-                               :routine routine
-                               :isRunning running?}])))}))
+        (when-let [id (:id routine)]
+          (let [next-activity @(rf/subscribe [:persisted-state [id :next-activity]])
+                prev-activity @(rf/subscribe [:persisted-state [id :prev-activity]])
+                paused? @(rf/subscribe [:paused? id])
+                time-left @(rf/subscribe [:time-left id])
+                duration (and (not no-duration?) (or time-left (:duration current-activity)))]
+            [:> c/RoutinePlayer {:duration duration
+                                 :currentActivity current-activity
+                                 :routine routine
+                                 :handleStart #(rf/dispatch [:start-routine routine 0])
+                                 :handleShuffle #(rf/dispatch [:start-routine (update routine :activities shuffle) 0])
+                                 :handleNext #(rf/dispatch [:skip-activity id])
+                                 :handlePlay #(rf/dispatch [:resume id])
+                                 :handlePause #(rf/dispatch [:pause id])
+                                 :handlePrev #(rf/dispatch [:skip-activity id :prev])
+                                 :handleStop #(rf/dispatch [:stop id])
+                                 :hasNext (some? next-activity)
+                                 :hasPrev (some? prev-activity)
+                                 :isPaused paused?
+                                 :isRunning running?}]))))}))
 
 (comment
   [:<>
@@ -205,7 +220,7 @@
                     [:> Button
                      {:size "sm"
                       :m 3
-                      :on-press #(rf/dispatch [:resume-routine id])}
+                      :on-press #(rf/dispatch [:next-activity id])}
                      "Skip"])
                   (when-not no-duration?
                     [:> Button
