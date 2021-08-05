@@ -1,6 +1,7 @@
 {
     "main": "node_modules/expo/AppEntry.js",
     "scripts": {
+        "start": "EXPO_LEGACY_IMPORTS=1 expo start",
         "expo:watch": "EXPO_LEGACY_IMPORTS=1 expo start",
         "shadow:watch": "shadow-cljs watch app",
         "shadow:release": "shadow-cljs release app",

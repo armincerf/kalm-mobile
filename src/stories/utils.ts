@@ -154,3 +154,23 @@ export function useInterval(callback: () => void, interval: number = 1000) {
     return () => clearInterval(id);
   }, [interval]);
 }
+
+export const useCombinedRefs = (...refs) => {
+  const targetRef = useRef();
+
+  useEffect(() => {
+    refs.forEach(ref => {
+      if (!ref) {
+        return;
+      }
+
+      if (typeof ref === 'function') {
+        ref(targetRef.current);
+      } else {
+        ref.current = targetRef.current;
+      }
+    });
+  }, [refs]);
+
+  return targetRef;
+};

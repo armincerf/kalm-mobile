@@ -40,7 +40,8 @@ const renderUnderlayLeft = (
       iconName="delete"
     />
     <SwipeUnderlay
-      bg="primary.600"
+      bg="green.600"
+      style={{ borderBottomRightRadius: 5 }}
       pressFn={() => edit(item)}
       iconName="edit"
     />
@@ -52,45 +53,58 @@ const Routines = ({
   handlePress,
   handleEditRoutine,
   handleDeleteRoutine,
-}) => (
-  <SafeAreaView>
-    <StatusBar barStyle={"default"} />
-    <Box p={4}>
-      <Heading>All Routines</Heading>
-      <SectionList
-        sections={data}
-        ItemSeparatorComponent={() => <Divider bg="white" size={2} />}
-        contentContainerStyle={{
-          paddingBottom: 110,
-        }}
-        keyExtractor={(item, index) => item + index}
-        renderItem={(props) => (
-          <SwipeItem
-            {...props}
-            drag={false}
-            renderUnderlayLeft={(props) =>
-              renderUnderlayLeft(props, handleDeleteRoutine, handleEditRoutine)
-            }
-            handlePress={handlePress}
-          />
-        )}
-        renderSectionHeader={({ section: { title } }) => (
-          <Box
-            px={5}
-            py={2}
-            _light={{ bg: "white", _text: { color: "black" } }}
-            _dark={{ bg: "gray.800", _text: { color: "white" } }}
-            _text={{
-              fontSize: 14,
-            }}
-          >
-            {title}
-          </Box>
-        )}
-      />
-    </Box>
-  </SafeAreaView>
-);
+}) => {
+  const insets = useSafeAreaInsets();
+  return (
+    <View flex={1} pt={insets.top} pb={insets.bottom}>
+      <StatusBar barStyle={"default"} />
+      <View p={4} flex={1}>
+        <Heading pb={4}>All Routines</Heading>
+        <SectionList
+          sections={data}
+          ItemSeparatorComponent={() => <Divider bg="white" />}
+          contentContainerStyle={{
+            flexGrow: 1,
+          }}
+          keyExtractor={(item, index) => item + index}
+          renderItem={(props) => (
+            <SwipeItem
+              {...props}
+              drag={false}
+              renderUnderlayLeft={(props) =>
+                renderUnderlayLeft(
+                  props,
+                  handleDeleteRoutine,
+                  handleEditRoutine
+                )
+              }
+              handlePress={handlePress}
+            />
+          )}
+          renderSectionFooter={() => <View pb={4} />}
+          renderSectionHeader={({ section: { title } }) => (
+            <Box
+              _text={{
+                fontSize: 14,
+              }}
+            >
+              <Box
+                _light={{ bg: "gray.100", _text: { color: "black" } }}
+                _dark={{ bg: "gray.800", _text: { color: "white" } }}
+                px={4}
+                py={2}
+                w="100%"
+                style={{ borderTopLeftRadius: 5, borderTopRightRadius: 5 }}
+              >
+                {title}
+              </Box>
+            </Box>
+          )}
+        />
+      </View>
+    </View>
+  );
+};
 
 export default ({
   animated,
@@ -138,6 +152,7 @@ export default ({
                 handleAddRoutine(e);
                 props.navigation.jumpTo("Home");
               }}
+              {...props}
               animated={animated}
             />
           )}
@@ -169,5 +184,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
     flexDirection: "row",
+    borderBottomRightRadius: 5,
   },
 });

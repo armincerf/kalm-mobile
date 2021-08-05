@@ -6,9 +6,10 @@ import { Box, Icon, Text, Pressable } from "native-base";
 import { TouchableOpacity, StyleSheet } from "react-native";
 import { COLOR_ACCENT } from "./utils";
 
-export const SwipeUnderlay = ({ bg, pressFn, iconName }) => {
+export const SwipeUnderlay = ({ bg, pressFn, iconName, ...props }) => {
   return (
     <Pressable
+      {...props}
       bg={bg}
       width={50}
       justifyContent="center"
@@ -55,14 +56,13 @@ export const SwipeItem = ({
     >
       <TouchableOpacity onPress={(e) => handlePress(newItem)}>
         <Box
-          style={[
-            styles.row,
-            isLast && !item.height && styles.lastRow,
-            {
-              backgroundColor: item.backgroundColor || COLOR_ACCENT,
-              height: item.height || 60,
-            },
-          ]}
+          _light={{
+            bg: item.backgroundColor || "gray.200",
+          }}
+          _dark={{
+            bg: item.backgroundColor || "#111",
+          }}
+          style={[styles.row, isLast && !item.height && styles.lastRow]}
         >
           {Boolean(drag) && (
             <TouchableOpacity style={styles.dragHandle} onPressIn={drag}>
@@ -72,7 +72,17 @@ export const SwipeItem = ({
           {Boolean(item?.cycleCount && item.cycleCount >= 1) && (
             <Text style={styles.cycles}>{`${item.cycleCount} Cycles`}</Text>
           )}
-          <Text style={styles.text}>{item.name}</Text>
+          <Text
+            style={item.backgroundColor ? styles.text : styles.textNoBg}
+            _light={{
+              color: item.backgroundColor ? "white" : "black",
+            }}
+            _dark={{
+              color: "white",
+            }}
+          >
+            {item.name}
+          </Text>
         </Box>
       </TouchableOpacity>
     </SwipeableItem>
@@ -85,25 +95,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    padding: 16,
   },
   lastRow: {
-    marginBottom: 15,
+    borderBottomLeftRadius: 5,
+    borderBottomRightRadius: 5,
   },
   text: {
     fontWeight: "bold",
-    color: "white",
     fontSize: 24,
   },
+  textNoBg: {},
   cycles: {
-    position: "absolute",
-    left: 5,
     color: "lightgrey",
+    paddingRight: 16,
     fontSize: 16,
   },
   dragHandle: {
     position: "absolute",
-    right: 5,
+    right: 16,
     height: "100%",
     justifyContent: "center",
     display: "flex",

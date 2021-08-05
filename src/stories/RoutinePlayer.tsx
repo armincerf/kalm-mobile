@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { FontAwesome5 } from "@expo/vector-icons";
 import {
   Box,
@@ -18,7 +18,7 @@ import {
   HStack,
   useColorModeValue,
 } from "native-base";
-import { StyleSheet, TouchableOpacity, Dimensions } from "react-native";
+import { StyleSheet, Animated, TouchableOpacity, Dimensions } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AddRoutines from "./AddRoutines";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
@@ -30,14 +30,16 @@ import { COLOR_ACCENT, COLOR_HIGHLIGHT, TAB_HEIGHT } from "./utils";
 import { Settings } from "./Settings";
 import { SwipeItem, SwipeUnderlay } from "./SwipeItem";
 import { UnderlayParams } from "react-native-swipeable-item";
-import Animated from "react-native-reanimated";
 import { TabBar } from "./TabBar";
 import SeekBar from "./SeekBar";
 import { Controls } from "./Controls";
+import { Player } from "./PlayerModal";
+import { Portal } from "react-native-portalize";
 const humanizeDuration = require("humanize-duration");
 
 export const PlayListView = ({
   currentActivity,
+  modalRef,
   routine,
   handleStart,
   handleShuffle,
@@ -132,7 +134,7 @@ export const PlayListView = ({
           startIcon={<FontAwesome5 name="play" size={16} color={accent} />}
           w="45%"
           bg={bg}
-          onPress={handleStart}
+          onPress={() => handleStart(0)}
         >
           <Text color={accent}>Play</Text>
         </Button>
@@ -154,10 +156,11 @@ export const PlayListView = ({
   return (
     <FlatList
       data={activities}
+      contentContainerStyle={{ flexGrow: 1 }}
       ListHeaderComponent={playerHeader}
       ListFooterComponent={() => (
         <Text
-          my={3}
+          m={4}
           color="gray.500"
         >{`${activities.length} activities, ${secondsText}`}</Text>
       )}
@@ -167,137 +170,99 @@ export const PlayListView = ({
           alignSelf="flex-end"
         />
       )}
-      renderItem={({ item }) => (
-        <Box mx={4}>
-          <HStack w="100%" justifyContent="space-between" alignItems="center">
-            <HStack w="80%">
-              <Box
-                bg="black"
-                my={2}
-                w="53px"
-                h="53px"
-                justifyContent="center"
-                alignItems="center"
-                borderRadius={5}
-                shadow={5}
-              >
-                {item.image ? (
-                  <Image
-                    w="53px"
-                    h="53px"
-                    resizeMode="stretch"
-                    borderRadius={5}
-                    alt={item.name}
-                    source={{ uri: item.image?.still }}
-                  />
-                ) : (
-                  <FontAwesome5 name="tasks" size={40} p={5} color="white" />
-                )}
-              </Box>
+      renderItem={({ item, index }) => (
+        <TouchableOpacity onPress={() => handleStart(index)}>
+          <Box mx={4}>
+            <HStack w="100%" justifyContent="space-between" alignItems="center">
+              <HStack w="80%">
+                <Box
+                  bg="black"
+                  my={2}
+                  w="53px"
+                  h="53px"
+                  justifyContent="center"
+                  alignItems="center"
+                  borderRadius={5}
+                  shadow={5}
+                >
+                  {item.image ? (
+                    <Image
+                      w="53px"
+                      h="53px"
+                      resizeMode="stretch"
+                      borderRadius={5}
+                      alt={item.name}
+                      source={{ uri: item.image?.still }}
+                    />
+                  ) : (
+                    <FontAwesome5 name="tasks" size={40} p={5} color="white" />
+                  )}
+                </Box>
 
-              <VStack
-                py={1}
-                px={4}
-                alignItems="flex-start"
-                justifyContent="center"
-                w="90%"
-              >
-                <Text isTruncated fontSize="lg">
-                  {" "}
-                  {item.name}{" "}
-                </Text>
-                {Boolean(item.description) && (
-                  <Text
-                    isTruncated
-                    fontSize="sm"
-                    paddingLeft="4px"
-                    color="gray.500"
-                  >
-                    {item.description}
+                <VStack
+                  py={1}
+                  px={4}
+                  alignItems="flex-start"
+                  justifyContent="center"
+                  w="90%"
+                >
+                  <Text isTruncated fontSize="lg">
+                    {" "}
+                    {item.name}{" "}
                   </Text>
-                )}
-              </VStack>
+                  {Boolean(item.description) && (
+                    <Text
+                      isTruncated
+                      fontSize="sm"
+                      paddingLeft="4px"
+                      color="gray.500"
+                    >
+                      {item.description}
+                    </Text>
+                  )}
+                </VStack>
+              </HStack>
+              <Text fontSize="xs" color="gray.500">
+                {item?.duration
+                  ? new Date(item.duration).toISOString().substr(11, 8)
+                  : "Manual"}
+              </Text>
             </HStack>
-            <Text fontSize="xs" color="gray.500">
-              {item?.duration
-                ? new Date(item.duration).toISOString().substr(11, 8)
-                : "Manual"}
-            </Text>
-          </HStack>
-        </Box>
+          </Box>
+        </TouchableOpacity>
       )}
       keyExtractor={({ name, cycleIdx, index }) => name + cycleIdx + index}
     />
   );
 };
 
-const Player = ({
-  currentActivity,
-  routine,
-  ...props
-}: {
-  currentActivity: any;
-  routine: any[];
-  duration: number;
-  isRunning: boolean;
-  hasNext: boolean;
-  hasPrev: boolean;
-  isPaused: boolean;
-  handleNext: () => void;
-  handlePlay: () => void;
-  handlePause: () => void;
-  handlePrev: () => void;
-  handleStop: () => void;
-}) => {
-  const bigImageSize = Dimensions.get("window").width * 0.6;
-  return (
-    <Box bg="black" height="100%">
-      <Center>
-        <VStack m={5}>
-          {Boolean(currentActivity?.image) && (
-            <Box shadow={9} alignSelf="center" w={bigImageSize} h={bigImageSize} bg="white">
-              <Image
-                resizeMode="stretch"
-                w={bigImageSize}
-                h={bigImageSize}
-                alt={currentActivity.name}
-                source={{
-                  uri: props.isPaused
-                    ? currentActivity.image?.still
-                    : currentActivity.image?.gif ||
-                      currentActivity.image?.still,
-                }}
-              />
-            </Box>
-          )}
-          <Heading color="white" mt={10}>
-            {currentActivity?.name}
-          </Heading>
-          <Text fontSize="lg" color={COLOR_HIGHLIGHT}>
-            {currentActivity?.description || "this is a test description"}
-          </Text>
-          {currentActivity?.duration && (
-            <Box my={5}>
-              <SeekBar
-                id={routine.id.toString()}
-                trackLength={currentActivity.duration}
-              />
-            </Box>
-          )}
-          <Controls {...props} id={routine.id} />
-        </VStack>
-      </Center>
-    </Box>
-  );
-};
-
-export default (props) => {
+export default ({ handleStart, ...props }) => {
   const bg = useColorModeValue("gray.200", "gray.800");
   const accent = useColorModeValue(COLOR_ACCENT, COLOR_HIGHLIGHT);
-
-  return Boolean(props.isRunning) ? (
-    <Player {...props} bg={bg} accent={accent} />
-  ) : (
-    <PlayListView {...props} bg={bg} accent={accent} />
+  const { bottom } = useSafeAreaInsets();
+  const animated = useRef(new Animated.Value(0)).current;
+  const modalRef = useRef(null);
+  return (
+    <View style={{ paddingBottom: bottom, flex: 1 }}>
+      <Portal>
+        <Player
+          {...props}
+          ref={modalRef}
+          animated={animated}
+          bg={bg}
+          accent={accent}
+        />
+      </Portal>
+      <PlayListView
+        {...props}
+        handleStart={(i) => {
+          modalRef?.current && modalRef.current.open();
+          handleStart(i);
+        }}
+        modalRef={modalRef}
+        bg={bg}
+        accent={accent}
+      />
+    </View>
   );
 };

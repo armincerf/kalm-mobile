@@ -234,11 +234,9 @@
     (.set timeout key #(rf/dispatch dispatch) ms)))
 
 (defn edit-routine
-  [{:keys [db]} [_ form-data]]
-  (let [data (js->clj form-data :keywordize-keys true)
-        current-routines (get-in db [:persisted-state :my-routines])
-        existing-routine-index (p/find-index current-routines {:id (:id data)})]
-    (prn existing-routine-index)))
+  [{:keys [db]} [_ navigation form-data]]
+  {:db (assoc-in db [:state :edit-routine] form-data)
+   :fx [[:dispatch [:navigate navigation "EditRoutine" {:storedRoutine form-data}]]]})
 
 (defn delete-routine
   [{:keys [db]} [_ form-data]]

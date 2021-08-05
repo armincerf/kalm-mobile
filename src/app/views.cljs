@@ -154,7 +154,7 @@
                                                                           :err err}))))))
 
 (defn routine-player
-  [{:keys [activities]} _ _]
+  [{:keys [activities]} _ _ _]
   (r/create-class
    {:component-did-mount
     (fn []
@@ -164,7 +164,7 @@
           (add-random-activity-image activity idx))
         activities)))
     :reagent-render
-    (fn [routine current-activity running?]
+    (fn [routine current-activity running? animated]
       (let [no-duration?
             (and current-activity
                  (not (:duration current-activity)))]
@@ -176,8 +176,9 @@
                 duration (and (not no-duration?) (or time-left (:duration current-activity)))]
             [:> c/RoutinePlayer {:duration duration
                                  :currentActivity current-activity
+                                 :animated animated
                                  :routine routine
-                                 :handleStart #(rf/dispatch [:start-routine routine 0])
+                                 :handleStart #(rf/dispatch [:start-routine routine %])
                                  :handleShuffle #(rf/dispatch [:start-routine (update routine :activities shuffle) 0])
                                  :handleNext #(rf/dispatch [:skip-activity id])
                                  :handlePlay #(rf/dispatch [:resume id])
@@ -292,7 +293,7 @@
     [:> RoutineList
      {:data grouped-routines
       :handleDeleteRoutine (fn [routine] (rf/dispatch [:delete-routine routine]))
-      :handleEditRoutine (fn [routine] (rf/dispatch [:edit-routine routine]))
+      :handleEditRoutine (fn [routine] (rf/dispatch [:edit-routine navigation routine]))
       :animated animated
       :handleAddRoutine (fn [props] (rf/dispatch [:add-routine props]))
       :settingsData [{:title "Admin stuff" :data [{:label "version 0.0.12"}
@@ -302,3 +303,13 @@
         (rf/dispatch
          [:navigate navigation "Routine"
           (js->clj a :keywordize-keys true)]))}]))
+
+
+(defn edit-routine
+  [_nav animated]
+  (let [routine @(rf/subscribe [:state [:edit-routine]])]
+    (def routine routine)
+    [:> c/AddRoutine
+     {:storedRoutine routine
+      :animated animated
+      :handleSubmit (fn [props] (rf/dispatch [:add-routine props]))}]))

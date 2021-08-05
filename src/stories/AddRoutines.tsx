@@ -87,7 +87,9 @@ export default ({
   handleSubmit,
   animated,
   storedRoutine = { activities: [] },
+  ...props
 }) => {
+  
   const initialRoutines: Item[] = storedRoutine.activities.map((r, index) => {
     const routine = {
       ...defaultRoutine(index),

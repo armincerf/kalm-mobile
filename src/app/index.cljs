@@ -31,11 +31,11 @@
       tailwind-rn
       (js->clj :keywordize-keys true)))
 
-(defn screen-main [_props]
+(defn screen-main [_props animated]
   (let [{:keys [id] :as routine} @(rf/subscribe [:current-routine])
         current-activity @(rf/subscribe [:persisted-state [id :current-activity]])
         running? (not (empty? current-activity))]
-    [views/routine-player routine current-activity running?]))
+    [views/routine-player routine current-activity running? animated]))
 
 (def stack (rn-stack/createStackNavigator))
 
@@ -53,7 +53,8 @@
         !navigation-ref (clojure.core/atom {})
         page @(rf/subscribe [:page])
         routine (when (routine? (:name page))
-                  (:props page))]
+                  (or (:props page)
+                      (:storedRoutine page)))]
     [:> NativeBaseProvider
      {:theme customTheme}
      [:> nav/NavigationContainer
@@ -106,12 +107,18 @@
                      :options {:headerShown false}
                      :component (r/reactify-component
                                  #(views/routines % animated))})
+            (screen {:name "EditRoutine"
+                     :options {:title (str "Editing " (:name routine))
+                               :headerTintColor (if dark-mode?
+                                                  c/highlight
+                                                  c/accent)}
+                     :component (r/reactify-component #(views/edit-routine % animated))})
             (screen {:name "Routine"
                      :options {:title (or (:name routine) "Routine")
                                :headerTintColor (if dark-mode?
                                                   c/highlight
                                                   c/accent)}
-                     :component (r/reactify-component screen-main)})]])]]]]))
+                     :component (r/reactify-component #(screen-main % animated))})]])]]]]))
 
 (defn start
   []
