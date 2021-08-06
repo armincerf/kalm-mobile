@@ -288,10 +288,11 @@
         routines (mapv gen-routine saved-routines)
         grouped-routines (mapv (fn [[k v]]
                                  {:title (or k "No Type") :data v})
-                               (group-by :type routines))]
-    (def saved-routines saved-routines)
+                               (group-by :type routines))
+        active-routines @(rf/subscribe [:active-routines])]
     [:> RoutineList
      {:data grouped-routines
+      :activeRoutines active-routines
       :handleDeleteRoutine (fn [routine] (rf/dispatch [:delete-routine routine]))
       :handleEditRoutine (fn [routine] (rf/dispatch [:edit-routine navigation routine]))
       :animated animated

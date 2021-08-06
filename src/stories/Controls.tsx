@@ -92,23 +92,18 @@ export const SmallControls = ({
           style={styles.button}
           onPress={handleNext}
         >
-          <FontAwesome5
-            name={"check"}
-            size={24}
-            color={iconColor}
-          />
+          <FontAwesome5 name={"check"} size={24} color={iconColor} />
         </TouchableOpacity>
       )}
       <TouchableOpacity
         activeOpacity={0.75}
         style={styles.button}
-        disabled={!hasNext}
         onPress={handleNext}
       >
         <FontAwesome5
-          name="forward"
-          size={16}
-          color={hasNext ? iconColor : "gray"}
+          name={hasNext ? "forward" : "times"}
+          size={24}
+          color={iconColor}
         />
       </TouchableOpacity>
     </>

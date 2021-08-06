@@ -34,7 +34,9 @@
 (defn screen-main [_props animated]
   (let [{:keys [id] :as routine} @(rf/subscribe [:current-routine])
         current-activity @(rf/subscribe [:persisted-state [id :current-activity]])
-        running? (not (empty? current-activity))]
+        running? (not (empty? current-activity))
+        active-routines @(rf/subscribe [:active-routines])]
+    (prn "active " active-routines)
     [views/routine-player routine current-activity running? animated]))
 
 (def stack (rn-stack/createStackNavigator))

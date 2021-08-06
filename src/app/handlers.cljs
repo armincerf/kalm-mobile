@@ -70,30 +70,40 @@
        :db (assoc-in db [:persisted-state id :scheduled?] false)}
       (rf/console :error "No routine to resume" id idx routine))))
 
+(defn routine-complete
+  [{:keys [db]} [_ {:keys [id] :as routine}]]
+  (log "routine complete")
+  {:db (-> db
+           (update-in [:persisted-state :active-routines] disj id)
+           (p/dissoc-in [:persisted-state id]))})
+
 (defn start-routine
   [{:keys [db]} [_ {:keys [id] :as routine} idx]]
   (let [activities (vec (:activities routine))
-        activity (get activities idx)]
+        activity (get activities idx)
+        next (get activities (inc idx))]
     (log "start routine2" (:name routine))
     {:db (-> db
              (assoc-in [:persisted-state id :current-idx] idx)
              (assoc-in [:persisted-state id :current-activity] activity)
              (assoc-in [:persisted-state id :time-remaining] (:duration activity))
+             (update-in [:persisted-state :active-routines] conj id)
              (assoc-in [:persisted-state id :prev-activity]
                        (when (and activity
                                   (pos? idx))
                          (get activities (dec idx))))
-             (assoc-in [:persisted-state id :next-activity]
-                       (when-let [next (get activities (inc idx))]
-                         next)))
+             (assoc-in [:persisted-state id :next-activity] next))
      :fx [[:dispatch [:schedule-notifications! id]]
           (when-let [duration (:duration activity)]
             [:dispatch-later2
              {:ms duration
               :key id
-              :dispatch [:start-routine
-                         routine
-                         (inc idx)]}])]}))
+              :dispatch
+              (if next
+                [:start-routine
+                 routine
+                 (inc idx)]
+                [:routine-complete routine])}])]}))
 
 (defn timeout-fn
   [key fn]
@@ -333,6 +343,7 @@
 (rf/reg-event-fx :save-time-left [base-interceptors] save-time-left)
 (rf/reg-event-fx :resume [base-interceptors] resume)
 (rf/reg-event-fx :stop [base-interceptors] stop)
+(rf/reg-event-fx :routine-complete [base-interceptors] routine-complete)
 (rf/reg-event-fx :navigate [base-interceptors] navigate)
 (rf/reg-event-fx :add-routine [base-interceptors] add-routine)
 (rf/reg-event-fx :edit-routine [base-interceptors] edit-routine)

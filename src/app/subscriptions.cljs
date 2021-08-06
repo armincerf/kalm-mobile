@@ -43,3 +43,11 @@
              :persisted-state
              (get id)
              :time-remaining))))
+
+(rf/reg-sub
+ :active-routines
+ (fn [db [_ id]]
+   (let [ids (get-in db [:persisted-state :active-routines])]
+     (for [id ids]
+       {:currentActivity (get-in db [:persisted-state id :current-activity])
+        :id id}))))
