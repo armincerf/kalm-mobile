@@ -1,6 +1,8 @@
 (ns app.subscriptions
   (:require [re-frame.core :as rf]
-            ["smart-timeout" :as timeout]))
+            ["smart-timeout" :as timeout]
+            [potpuri.core :as p]
+            [app.db :as db]))
 
 (defn version [db _] (:version db))
 (rf/reg-sub :version version)
@@ -23,7 +25,8 @@
 (rf/reg-sub
  :current-routine
  (fn [db _]
-   (get-in db [:state :current-routine])))
+   (when-let [id (get-in db [:current-page :props])]
+     (db/routine-by-id db id))))
 
 (rf/reg-sub
  :paused?
@@ -47,6 +50,7 @@
 (rf/reg-sub
  :active-routines
  (fn [db [_ id]]
+   (def db db)
    (let [ids (get-in db [:persisted-state :active-routines])]
      (for [id ids]
        {:currentActivity (get-in db [:persisted-state id :current-activity])

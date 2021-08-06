@@ -18,7 +18,12 @@ import {
   HStack,
   useColorModeValue,
 } from "native-base";
-import { StyleSheet, Animated, TouchableOpacity, Dimensions } from "react-native";
+import {
+  StyleSheet,
+  Animated,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AddRoutines from "./AddRoutines";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
@@ -38,11 +43,11 @@ import { Portal } from "react-native-portalize";
 const humanizeDuration = require("humanize-duration");
 
 export const PlayListView = ({
-  currentActivity,
-  modalRef,
   routine,
   handleStart,
   handleShuffle,
+  isRunning,
+  currentIdx,
   bg,
   accent,
 }) => {
@@ -170,67 +175,79 @@ export const PlayListView = ({
           alignSelf="flex-end"
         />
       )}
-      renderItem={({ item, index }) => (
-        <TouchableOpacity onPress={() => handleStart(index)}>
-          <Box mx={4}>
-            <HStack w="100%" justifyContent="space-between" alignItems="center">
-              <HStack w="80%">
-                <Box
-                  bg="black"
-                  my={2}
-                  w="53px"
-                  h="53px"
-                  justifyContent="center"
-                  alignItems="center"
-                  borderRadius={5}
-                  shadow={5}
-                >
-                  {item.image ? (
-                    <Image
-                      w="53px"
-                      h="53px"
-                      resizeMode="stretch"
-                      borderRadius={5}
-                      alt={item.name}
-                      source={{ uri: item.image?.still }}
-                    />
-                  ) : (
-                    <FontAwesome5 name="tasks" size={40} p={5} color="white" />
-                  )}
-                </Box>
+      renderItem={({ item, index }) => {
+        const isDone = isRunning && index < currentIdx;
+        const textDec = isDone ? 0.4 : 1;
+        return (
+          <TouchableOpacity onPress={() => handleStart(index)}>
+            <Box mx={4}>
+              <HStack
+                w="100%"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <HStack w="80%">
+                  <Box
+                    bg="black"
+                    my={2}
+                    w="53px"
+                    h="53px"
+                    justifyContent="center"
+                    alignItems="center"
+                    borderRadius={5}
+                    shadow={5}
+                  >
+                    {item.image ? (
+                      <Image
+                        w="53px"
+                        h="53px"
+                        resizeMode="stretch"
+                        borderRadius={5}
+                        alt={item.name}
+                        source={{ uri: item.image?.still }}
+                      />
+                    ) : (
+                      <FontAwesome5
+                        name="tasks"
+                        size={40}
+                        p={5}
+                        color="white"
+                      />
+                    )}
+                  </Box>
 
-                <VStack
-                  py={1}
-                  px={4}
-                  alignItems="flex-start"
-                  justifyContent="center"
-                  w="90%"
-                >
-                  <Text isTruncated fontSize="lg">
-                    {" "}
-                    {item.name}{" "}
-                  </Text>
-                  {Boolean(item.description) && (
-                    <Text
-                      isTruncated
-                      fontSize="sm"
-                      paddingLeft="4px"
-                      color="gray.500"
-                    >
-                      {item.description}
+                  <VStack
+                    py={1}
+                    px={4}
+                    alignItems="flex-start"
+                    justifyContent="center"
+                    w="90%"
+                  >
+                    <Text isTruncated opacity={textDec} fontSize="lg">
+                      {item.name}
                     </Text>
-                  )}
-                </VStack>
+                    {Boolean(item.description) && (
+                      <Text
+                        isTruncated
+                        opacity={textDec}
+                        fontSize="sm"
+                        paddingLeft="4px"
+                      >
+                        {item.description}
+                      </Text>
+                    )}
+                  </VStack>
+                </HStack>
+                <Text fontSize="xs" opacity={textDec} color="gray.500">
+                  {item?.duration
+                    ? new Date(item.duration).toISOString().substr(11, 8)
+                    : "Manual"}
+                </Text>
               </HStack>
-              <Text fontSize="xs" color="gray.500">
-                {item?.duration
-                  ? new Date(item.duration).toISOString().substr(11, 8)
-                  : "Manual"}
-              </Text>
-            </HStack>
-          </Box>
-        </TouchableOpacity>
-      )}
+            </Box>
+          </TouchableOpacity>
+        );
+      }}
       keyExtractor={({ name, cycleIdx, index }) => name + cycleIdx + index}
     />
   );

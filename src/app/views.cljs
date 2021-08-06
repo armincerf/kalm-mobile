@@ -128,10 +128,11 @@
      "Finish")])
 
 (defn add-random-activity-image
-  [activity index]
+  [activity routine-id index]
   (when (and (:hasGif activity) handlers/GIPHY (not (:image activity)))
     (-> (handlers/fetch-image (:name activity))
         (.then (fn [{:keys [^js body status]}]
+                 (prn "res")
                  (if (= 200 status)
                    (let [data (js->clj (.-data body))
                          image
@@ -149,19 +150,20 @@
                       :still still})
                    (prn "error" body))))
         (.then #(rf/dispatch [:update-activity
-                              (assoc activity :image %) index]))
+                              (assoc activity :image %) routine-id index]))
         (.catch (fn [err] (.track c/analytics "Error fetching image" #js {:key handlers/GIPHY
                                                                           :err err}))))))
 
 (defn routine-player
-  [{:keys [activities]} _ _ _]
+  [{:keys [activities id]} _ _ _]
   (r/create-class
    {:component-did-mount
     (fn []
       (doall
        (map-indexed
         (fn [idx activity]
-          (add-random-activity-image activity idx))
+          (prn "add image" activity)
+          (add-random-activity-image activity id idx))
         activities)))
     :reagent-render
     (fn [routine current-activity running? animated]
@@ -169,8 +171,8 @@
             (and current-activity
                  (not (:duration current-activity)))]
         (when-let [id (:id routine)]
-          (let [next-activity @(rf/subscribe [:persisted-state [id :next-activity]])
-                prev-activity @(rf/subscribe [:persisted-state [id :prev-activity]])
+          (let [activity-idx @(rf/subscribe [:persisted-state [id :current-idx]])
+                activities (:activities routine)
                 paused? @(rf/subscribe [:paused? id])
                 time-left @(rf/subscribe [:time-left id])
                 duration (and (not no-duration?) (or time-left (:duration current-activity)))]
@@ -178,15 +180,17 @@
                                  :currentActivity current-activity
                                  :animated animated
                                  :routine routine
-                                 :handleStart #(rf/dispatch [:start-routine routine %])
-                                 :handleShuffle #(rf/dispatch [:start-routine (update routine :activities shuffle) 0])
+                                 :handleStart #(rf/dispatch [:start-routine id %])
+
+                                 :handleShuffle #(rf/dispatch [:shuffle-routine id])
                                  :handleNext #(rf/dispatch [:skip-activity id])
                                  :handlePlay #(rf/dispatch [:resume id])
                                  :handlePause #(rf/dispatch [:pause id])
                                  :handlePrev #(rf/dispatch [:skip-activity id :prev])
                                  :handleStop #(rf/dispatch [:stop id])
-                                 :hasNext (some? next-activity)
-                                 :hasPrev (some? prev-activity)
+                                 :hasNext (some? (get activities (inc activity-idx)))
+                                 :hasPrev (some? (get activities (dec activity-idx)))
+                                 :currentIdx activity-idx
                                  :isPaused paused?
                                  :isRunning running?}]))))}))
 
@@ -244,71 +248,37 @@
            (when @show-preview?
              [routine-view routine])])
 
-(defn gen-routine
-  [root-activity]
-  (let [gen-cycles
-        (fn [activities cycle-count]
-          (for [cycle (range cycle-count)]
-            (map
-             #(assoc % :cycleIdx (inc cycle) :total-cycles cycle-count)
-             activities)))
-        gen-activity
-        (fn [props]
-          (let [activity? (some? (:name props))
-                activity (if activity?
-                           props
-                           (:activity props))
-                activities (if (some? (:duration props))
-                             [props]
-                             (:activities activity))
-                cycle-count (or (:cycle-count props)
-                                (:cycleCount activity))]
-            (concat
-             (:pre-activity activity)
-             (gen-cycles activities (or cycle-count 1))
-             (:post-activity activity))))
-        gen-activities (fn [activities]
-                         (for [props activities]
-                           (gen-activity props)))
-        activities
-        (remove nil? (flatten (gen-activities (:activities root-activity))))
-        total-time (reduce
-                    (fn [count activity]
-                      (+ count (:duration activity)))
-                    0
-                    activities)]
-    (assoc root-activity
-           :activities activities
-           :total-time total-time)))
-
 (defn routines
   [{:keys [navigation]} animated]
-
   (let [saved-routines (remove nil? @(rf/subscribe [:persisted-state [:my-routines]]))
-        routines (mapv gen-routine saved-routines)
         grouped-routines (mapv (fn [[k v]]
                                  {:title (or k "No Type") :data v})
-                               (group-by :type routines))
+                               (group-by :type saved-routines))
         active-routines @(rf/subscribe [:active-routines])]
     [:> RoutineList
      {:data grouped-routines
       :activeRoutines active-routines
-      :handleDeleteRoutine (fn [routine] (rf/dispatch [:delete-routine routine]))
-      :handleEditRoutine (fn [routine] (rf/dispatch [:edit-routine navigation routine]))
+      :handleDeleteRoutine (fn [routine-id] (rf/dispatch [:delete-routine routine-id]))
+      :handleEditRoutine (fn [routine-id] (rf/dispatch [:edit-routine navigation routine-id]))
+      :handleNext #(rf/dispatch [:skip-activity %])
+      :handlePlay #(rf/dispatch [:resume %])
+      :handlePause #(rf/dispatch [:pause %])
+      :handleStop #(rf/dispatch [:stop %])
       :animated animated
       :handleAddRoutine (fn [props] (rf/dispatch [:add-routine props]))
       :settingsData [{:title "Admin stuff" :data [{:label "version 0.0.12"}
                                                   {:label "Wipe Db" :action #(rf/dispatch [:wipe-db])}]}]
       :handlePress
       (fn [^js a]
+        (prn "nav" (.-id a))
         (rf/dispatch
          [:navigate navigation "Routine"
-          (js->clj a :keywordize-keys true)]))}]))
+          (.-id a)]))}]))
 
 
 (defn edit-routine
   [_nav animated]
-  (let [routine @(rf/subscribe [:state [:edit-routine]])]
+  (let [routine @(rf/subscribe [:current-routine])]
     (def routine routine)
     [:> c/AddRoutine
      {:storedRoutine routine

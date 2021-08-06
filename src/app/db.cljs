@@ -132,6 +132,51 @@
                   xs seen)))]
      (step coll #{}))))
 
+(defn routine-by-id
+  [db id]
+  (p/find-first (get-in db [:persisted-state :my-routines]) {:id id}))
+
+(defn routine-id->index
+  [db id]
+  (p/find-index (get-in db [:persisted-state :my-routines]) {:id id}))
+
+(defn gen-routine
+  [root-activity]
+  (let [gen-cycles
+        (fn [activities cycle-count]
+          (for [cycle (range cycle-count)]
+            (map
+             #(assoc % :cycleIdx (inc cycle) :total-cycles cycle-count)
+             activities)))
+        gen-activity
+        (fn [props]
+          (let [activity? (some? (:name props))
+                activity (if activity?
+                           props
+                           (:activity props))
+                activities (if (some? (:duration props))
+                             [props]
+                             (:activities activity))
+                cycle-count (or (:cycle-count props)
+                                (:cycleCount activity))]
+            (concat
+             (:pre-activity activity)
+             (gen-cycles activities (or cycle-count 1))
+             (:post-activity activity))))
+        gen-activities (fn [activities]
+                         (for [props activities]
+                           (gen-activity props)))
+        activities
+        (remove nil? (flatten (gen-activities (:activities root-activity))))
+        total-time (reduce
+                    (fn [count activity]
+                      (+ count (:duration activity)))
+                    0
+                    activities)]
+    (assoc root-activity
+           :activities (vec activities)
+           :total-time total-time)))
+
 (defn default-app-db
   []
   (go
@@ -144,11 +189,11 @@
                :version "version-not-set"}
               (when db-from-string
                 {:persisted-state db-from-string}))
-          default-routines [my-activity
-                            random-chores
-                            lazy]
+          default-routines (mapv gen-routine [my-activity
+                                              random-chores
+                                              lazy])
           routines-plus-defaults
           (distinct-by :id (concat (:my-routines db-from-string) default-routines))
           with-default-routines
-          (assoc-in db [:persisted-state :my-routines] routines-plus-defaults)]
+          (assoc-in db [:persisted-state :my-routines] (vec routines-plus-defaults))]
       (rf/dispatch [:initialize-db with-default-routines]))))

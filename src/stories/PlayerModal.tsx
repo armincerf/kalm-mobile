@@ -37,19 +37,25 @@ export const Player = forwardRef(
   ({ animated, currentActivity, routine, ...props }: PlayerProps, ref) => {
     const modalizeRef = useRef(null);
     const combinedRef = useCombinedRefs(ref, modalizeRef);
-    const [handle, setHandle] = useState(false);
-    console.log("render");
 
     const scheme = useColorScheme();
     const isDark = scheme === "dark";
-    const handlePosition = (position) => {
-      setHandle(position === "top");
-    };
+    const [isOpen, setIsOpen] = useState(false);
 
     const renderContent = () => {
       useEffect(() => {
-        !currentActivity && combinedRef?.current && combinedRef.current.close();
+        if (isOpen && !props.isRunning && modalizeRef?.current) {
+          modalizeRef.current.close();
+        }
       }, [currentActivity]);
+      useEffect(() => {
+        setTimeout(() => {
+          currentActivity &&
+            props.isRunning &&
+            modalizeRef?.current &&
+            modalizeRef.current.open();
+        }, 100);
+      }, []);
       return (
         <>
           <Animated.View
@@ -110,7 +116,7 @@ export const Player = forwardRef(
 
           <VStack alignSelf="center">
             <VStack width={`${Dimensions.get("window").width * 0.8}px`}>
-              <Heading color={ isDark ? "white" : "black"} mt={10} mb={4}>
+              <Heading color={isDark ? "white" : "black"} mt={10} mb={4}>
                 {currentActivity?.name}
               </Heading>
               {Boolean(currentActivity?.description) && (
@@ -137,14 +143,31 @@ export const Player = forwardRef(
       <Modalize
         ref={combinedRef}
         panGestureAnimatedValue={animated}
+        onClose={() => setIsOpen(false)}
+        onOpen={() => setIsOpen(true)}
         handlePosition="inside"
+        modalStyle={{
+          backgroundColor: isDark ? "#000" : "#fff",
+          zIndex: 5,
+
+          marginTop: "auto",
+
+          borderTopLeftRadius: 12,
+          borderTopRightRadius: 12,
+
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+
+          elevation: 4,
+        }}
         handleStyle={{
           top: 13,
           width: 40,
           height: 6,
           backgroundColor: "#bcc0c1",
         }}
-        onPositionChange={handlePosition}
       >
         {renderContent()}
       </Modalize>

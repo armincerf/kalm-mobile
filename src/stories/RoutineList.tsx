@@ -31,6 +31,7 @@ import { TabBar } from "./TabBar";
 import { BlurView } from "expo-blur";
 import { useColorScheme } from "react-native";
 import { SmallControls } from "./Controls";
+import ActiveRoutine from "./ActiveRoutine";
 
 const Tab = createBottomTabNavigator();
 
@@ -42,167 +43,138 @@ const renderUnderlayLeft = (
   <Animated.View style={[styles.underlayLeft, { opacity: percentOpen }]}>
     <SwipeUnderlay
       bg="secondary.600"
-      pressFn={() => del(item)}
+      pressFn={() => del(item.id)}
       iconName="delete"
     />
     <SwipeUnderlay
       bg="green.600"
       style={{ borderBottomRightRadius: 5 }}
-      pressFn={() => edit(item)}
+      pressFn={() => edit(item.id)}
       iconName="edit"
     />
   </Animated.View>
 );
 
-const Routines = ({
-  data,
-  handlePress,
-  handleEditRoutine,
-  handleDeleteRoutine,
-  activeRoutines,
-  ...props
-}) => {
+const Routines = (props: RoutineListProps) => {
   const insets = useSafeAreaInsets();
-
+  const {
+    data,
+    handlePress,
+    handleEditRoutine,
+    handleDeleteRoutine,
+    activeRoutines,
+  } = props;
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
   return (
-    <>
-      <View flex={1} position="relative" h="100%" pt={insets.top}>
-        <View style={[styles.currentRoutines, { width: "100%" }]}>
-          <BlurView
-            intensity={100}
-            tint={isDark ? "dark" : "light"}
-            style={[styles.blurTab, { paddingBottom: insets.bottom }]}
-          >
-            {activeRoutines.map(({ currentActivity, id }, index) => {
-              return (
-                <Box
-                  w="100%"
-                  h={16}
-                  p={4}
-                  key={id}
-                  borderBottomColor={isDark ? "gray.300" : "gray.700"}
-                  borderBottomWidth={
-                    index >= activeRoutines.length - 1 ? "0px" : "1px"
-                  }
-                >
-                  <HStack justifyContent="space-between">
-                    <HStack h="100%" w="80%" alignItems="center">
-                      <Box
-                        bg="black"
-                        w="43px"
-                        h="43px"
-                        mr={4}
-                        justifyContent="center"
-                        alignItems="center"
-                        borderRadius={5}
-                        shadow={5}
-                      >
-                        {currentActivity.image ? (
-                          <Image
-                            w="43px"
-                            h="43px"
-                            resizeMode="stretch"
-                            borderRadius={5}
-                            alt={currentActivity.name}
-                            source={{ uri: currentActivity.image?.still }}
-                          />
-                        ) : (
-                          <FontAwesome5
-                            name="tasks"
-                            size={40}
-                            p={5}
-                            color="white"
-                          />
-                        )}
-                      </Box>
-                      <VStack justifyContent="space-between">
-                        <Text
-                          textTransform="uppercase"
-                          fontSize={10}
-                          fontWeight="bold"
-                          color="gray.400"
-                        >
-                          name
-                        </Text>
-                        <Text>{currentActivity?.name || "foo"}</Text>
-                      </VStack>
-                    </HStack>
-                    <SmallControls
-                      {...props}
-                      iconColor={isDark ? "white" : "black"}
-                    />
-                  </HStack>
-                </Box>
-              );
-            })}
-          </BlurView>
-        </View>
-        <StatusBar barStyle={"default"} />
-        <View p={4} flex={1}>
-          <Heading pb={4}>All Routines</Heading>
-          <SectionList
-            sections={data}
-            ItemSeparatorComponent={() => <Divider bg="white" />}
-            contentContainerStyle={{
-              flexGrow: 1,
-            }}
-            keyExtractor={(item, index) => item + index}
-            renderItem={(props) => (
-              <SwipeItem
+    <View flex={1} position="relative" h="100%" pt={insets.top}>
+      <View style={[styles.currentRoutines, { width: "100%" }]}>
+        <BlurView
+          intensity={100}
+          tint={isDark ? "dark" : "light"}
+          style={[styles.blurTab, { paddingBottom: insets.bottom }]}
+        >
+          {activeRoutines.map((activityProps, index) => {
+            return (
+              <ActiveRoutine
+                key={index}
                 {...props}
-                drag={false}
-                renderUnderlayLeft={(props) =>
-                  renderUnderlayLeft(
-                    props,
-                    handleDeleteRoutine,
-                    handleEditRoutine
-                  )
-                }
-                handlePress={handlePress}
+                {...activityProps}
+                index={index}
+                isDark={isDark}
               />
-            )}
-            renderSectionFooter={() => <View pb={4} />}
-            renderSectionHeader={({ section: { title } }) => (
-              <Box
-                _text={{
-                  fontSize: 14,
-                }}
-              >
-                <Box
-                  _light={{ bg: "gray.100", _text: { color: "black" } }}
-                  _dark={{ bg: "gray.800", _text: { color: "white" } }}
-                  px={4}
-                  py={2}
-                  w="100%"
-                  style={{ borderTopLeftRadius: 5, borderTopRightRadius: 5 }}
-                >
-                  {title}
-                </Box>
-              </Box>
-            )}
-          />
-        </View>
+            );
+          })}
+        </BlurView>
       </View>
-    </>
+      <StatusBar barStyle={"default"} />
+      <View p={4} flex={1}>
+        <Heading pb={4}>All Routines</Heading>
+        <SectionList
+          sections={data}
+          ItemSeparatorComponent={() => <Divider bg="white" />}
+          contentContainerStyle={{
+            flexGrow: 1,
+          }}
+          keyExtractor={(item, index) => item + index}
+          renderItem={(props) => (
+            <SwipeItem
+              {...props}
+              drag={false}
+              renderUnderlayLeft={(props) =>
+                renderUnderlayLeft(
+                  props,
+                  handleDeleteRoutine,
+                  handleEditRoutine
+                )
+              }
+              handlePress={handlePress}
+            />
+          )}
+          renderSectionFooter={() => <View pb={4} />}
+          renderSectionHeader={({ section: { title } }) => (
+            <Box
+              _text={{
+                fontSize: 14,
+              }}
+            >
+              <Box
+                _light={{ bg: "gray.100", _text: { color: "black" } }}
+                _dark={{ bg: "gray.800", _text: { color: "white" } }}
+                px={4}
+                py={2}
+                w="100%"
+                style={{ borderTopLeftRadius: 5, borderTopRightRadius: 5 }}
+              >
+                {title}
+              </Box>
+            </Box>
+          )}
+        />
+      </View>
+    </View>
   );
 };
 
-export default ({
-  animated,
-  handleAddRoutine,
-  settingsData,
-  ...props
-}: {
+export type Activity = {
+  name: string;
+  duration?: number;
+  image: { still: string; gif?: string };
+  cycleIdx?: number;
+  routineName: string;
+};
+
+export type Routine = {
+  id: string;
+  type: string;
+  hasGif: boolean;
+  name: string;
+  totalTime: number;
+  activities: Activity[];
+};
+
+export type GroupedRoutines = {
+  type: string;
+  data: Routine[];
+};
+
+export type RoutineListProps = {
+  data: GroupedRoutines[];
+  activeRoutines: any[];
+  handleDeleteRoutine: (id: string) => void;
+  handleEditRoutine: (id: string) => void;
+  handleNext: (id: string) => void;
+  handlePlay: (id: string) => void;
+  handlePause: (id: string) => void;
+  handleStop: (id: string) => void;
   animated: any;
-  data: object;
   handleAddRoutine: (e: any) => void;
-  handleDeleteRoutine: (e: any) => void;
-  handleEditRoutine: (e: any) => void;
   settingsData: object[];
-  handlePress: () => void;
-}) => {
+  handlePress: (routine: { id: string }) => void;
+};
+
+export default (props: RoutineListProps) => {
+  const { animated, handleAddRoutine, settingsData } = props;
   return (
     <>
       <StatusBar barStyle="dark-content" />
@@ -260,6 +232,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 50,
     zIndex: 999,
+  },
+  underlayLeft: {
+    flex: 1,
+    backgroundColor: "gray",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    flexDirection: "row",
   },
   blurTab: {
     position: "absolute",

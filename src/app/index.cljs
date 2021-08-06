@@ -36,7 +36,6 @@
         current-activity @(rf/subscribe [:persisted-state [id :current-activity]])
         running? (not (empty? current-activity))
         active-routines @(rf/subscribe [:active-routines])]
-    (prn "active " active-routines)
     [views/routine-player routine current-activity running? animated]))
 
 (def stack (rn-stack/createStackNavigator))

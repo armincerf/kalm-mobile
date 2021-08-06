@@ -62,30 +62,42 @@
 
 (defn skip-activity
   [{:keys [db]} [_ id direction]]
-  (let [idx ((if (= :prev direction) dec inc) (get-in db [:persisted-state id :current-idx]))
-        routine (get-in db [:state :current-routine])]
-    (if (and idx routine)
+  (let [idx ((if (= :prev direction) dec inc) (get-in db [:persisted-state id :current-idx]))]
+    (if (and idx id)
       {:fx [[:notifs/cancel!]
-            [:dispatch [:start-routine routine idx]]]
+            [:dispatch [:start-routine id idx]]]
        :db (assoc-in db [:persisted-state id :scheduled?] false)}
-      (rf/console :error "No routine to resume" id idx routine))))
+      (rf/console :error "No routine to resume" id idx))))
 
 (defn routine-complete
-  [{:keys [db]} [_ {:keys [id] :as routine}]]
-  (log "routine complete")
+  [{:keys [db]} [_ id]]
+  (log "routine complete" {:id id})
   {:db (-> db
            (update-in [:persisted-state :active-routines] disj id)
            (p/dissoc-in [:persisted-state id]))})
 
+(defn shuffle-routine
+  [{:keys [db]} [_ id]]
+  (let [routine (db/routine-by-id db id)
+        activities (:activities routine)]
+    {:db (assoc-in db [:persisted-state
+                       :my-routines
+                       (db/routine-id->index db id)
+                       :activities]
+                   (vec (shuffle activities)))}))
+
 (defn start-routine
-  [{:keys [db]} [_ {:keys [id] :as routine} idx]]
-  (let [activities (vec (:activities routine))
+  [{:keys [db]} [_ id idx]]
+  (let [routine (db/routine-by-id db id)
+        activities (vec (:activities routine))
         activity (get activities idx)
         next (get activities (inc idx))]
     (log "start routine2" (:name routine))
     {:db (-> db
              (assoc-in [:persisted-state id :current-idx] idx)
-             (assoc-in [:persisted-state id :current-activity] activity)
+             (assoc-in [:persisted-state id :current-activity] (assoc activity
+                                                                      :routineName
+                                                                      (:name routine)))
              (assoc-in [:persisted-state id :time-remaining] (:duration activity))
              (update-in [:persisted-state :active-routines] conj id)
              (assoc-in [:persisted-state id :prev-activity]
@@ -101,9 +113,9 @@
               :dispatch
               (if next
                 [:start-routine
-                 routine
+                 id
                  (inc idx)]
-                [:routine-complete routine])}])]}))
+                [:routine-complete id])}])]}))
 
 (defn timeout-fn
   [key fn]
@@ -132,10 +144,13 @@
    :db (assoc-in db [:persisted-state key :timeout-paused?] nil)})
 
 (defn stop
-  [{:keys [db]} [_ key]]
-  {:fx [[:timeout-clear key]
+  [{:keys [db]} [_ id]]
+  (log "stopping " id)
+  {:fx [[:timeout-clear id]
         [:notifs/cancel!]]
-   :db (update db :persisted-state dissoc key)})
+   :db (-> db
+           (update-in [:persisted-state :active-routines] disj id)
+           (update :persisted-state dissoc id))})
 
 (defn fetch-image
   [name]
@@ -244,22 +259,17 @@
     (.set timeout key #(rf/dispatch dispatch) ms)))
 
 (defn edit-routine
-  [{:keys [db]} [_ navigation form-data]]
-  {:db (assoc-in db [:state :edit-routine] form-data)
-   :fx [[:dispatch [:navigate navigation "EditRoutine" {:storedRoutine form-data}]]]})
+  [{:keys [db]} [_ navigation id]]
+  {:db (assoc-in db [:state :edit-routine] id)
+   :fx [[:dispatch [:navigate navigation "EditRoutine" {:id id}]]]})
 
 (defn delete-routine
-  [{:keys [db]} [_ form-data]]
-  (let [data (js->clj form-data :keywordize-keys true)
-        current-routines (->> [:persisted-state :my-routines]
-                              (get-in db)
-                              (remove nil?))
-        existing-routine-index (p/find-index current-routines {:id (:id data)})]
+  [{:keys [db]} [_ id]]
+  (let [current-routines (get-in db [:persisted-state :my-routines])
+        existing-routine-index (p/find-index current-routines {:id id})]
     (when existing-routine-index
-      {:db (assoc-in
-            db [:persisted-state :my-routines
-                existing-routine-index]
-            nil)})))
+      (log "deleting routine" {:id id})
+      {:db (p/dissoc-in db [:persisted-state :my-routines existing-routine-index])})))
 
 (defn add-routine
   [{:keys [db]} [_ form-data]]
@@ -286,15 +296,13 @@
                            :duration
                            (if (pos? processed-duration)
                              processed-duration
-                             false)))))))
+                             false)))))
+               vec))
         routine {:id (str (or (:id data) (gensym (:routineName data))))
                  :name (:routineName data)
                  :type (if (seq type) type "My Routines")
                  :activities (parse-routines (:routines data))}
-        current-routines (get-in db [:persisted-state :my-routines])
-        existing-routine-index (p/find-index current-routines {:id (:id data)})]
-    (def data data)
-    (def current-routines current-routines)
+        existing-routine-index (db/routine-id->index db (:id data))]
     (when (:id routine)
       {:db (if existing-routine-index
              (assoc-in db [:persisted-state :my-routines existing-routine-index] routine)
@@ -304,27 +312,24 @@
 
 (defn navigate
   [{:keys [db]} [_ navigation route props]]
-  (let [db
-        (if (routine? route)
-          (assoc-in db [:state :current-routine] props)
-          db)]
-    {:fx [[:navigate! [navigation route props]]]
-     :db (assoc db
-                :current-page {:name route
-                               :props props}
-                :navigation navigation)}))
+  {:fx [[:navigate! [navigation route props]]]
+   :db (assoc db
+              :current-page {:name route
+                             :props props}
+              :navigation navigation)})
 
 (defn update-activity
-  [{:keys [db]} [_ activity index]]
-  (def db db)
-  {:db (update-in db [:state
-                      :current-routine
-                      :activities
-                      index] merge activity)})
+  [{:keys [db]} [_ activity routine-id index]]
+  {:db (assoc-in db [:persisted-state
+                     :my-routines
+                     (db/routine-id->index db routine-id)
+                     :activities
+                     index] activity)})
 
 (rf/reg-fx
  :navigate!
  (fn [[navigation route props]]
+   (prn "navigating" {:props (prn-str props)})
    (.navigate navigation route #js {:props (prn-str props)})))
 
 (rf/reg-fx
@@ -343,6 +348,7 @@
 (rf/reg-event-fx :save-time-left [base-interceptors] save-time-left)
 (rf/reg-event-fx :resume [base-interceptors] resume)
 (rf/reg-event-fx :stop [base-interceptors] stop)
+(rf/reg-event-fx :shuffle-routine [base-interceptors] shuffle-routine)
 (rf/reg-event-fx :routine-complete [base-interceptors] routine-complete)
 (rf/reg-event-fx :navigate [base-interceptors] navigate)
 (rf/reg-event-fx :add-routine [base-interceptors] add-routine)

@@ -62,26 +62,31 @@ export const Controls = ({
 };
 
 export const SmallControls = ({
-  handlePrev,
   handleNext,
   handlePlay,
   handlePause,
-  hasNext,
+  handleStop,
   duration,
   id,
   iconColor,
 }) => {
-  const isPaused = !Timeout.exists(id) || Timeout.paused(id);
+  const [paused, setPaused] = React.useState(Timeout.paused(id));
   return (
     <>
       {Boolean(duration) ? (
         <TouchableOpacity
-          activeOpacity={0.75}
+          activeOpacity={0.45}
           style={styles.button}
-          onPress={isPaused ? handlePlay : handlePause}
+          onPress={() => {
+            paused ? handlePlay(id) : handlePause(id);
+            setTimeout(
+              () => setPaused(!Timeout.exists(id) || Timeout.paused(id)),
+              100
+            );
+          }}
         >
           <FontAwesome5
-            name={isPaused ? "play" : "pause"}
+            name={paused ? "play" : "pause"}
             size={24}
             color={iconColor}
           />
@@ -90,7 +95,7 @@ export const SmallControls = ({
         <TouchableOpacity
           activeOpacity={0.75}
           style={styles.button}
-          onPress={handleNext}
+          onPress={() => handleNext(id)}
         >
           <FontAwesome5 name={"check"} size={24} color={iconColor} />
         </TouchableOpacity>
@@ -98,13 +103,9 @@ export const SmallControls = ({
       <TouchableOpacity
         activeOpacity={0.75}
         style={styles.button}
-        onPress={handleNext}
+        onPress={() => handleStop(id)}
       >
-        <FontAwesome5
-          name={hasNext ? "forward" : "times"}
-          size={24}
-          color={iconColor}
-        />
+        <FontAwesome5 name={"times"} size={24} color={iconColor} />
       </TouchableOpacity>
     </>
   );
@@ -112,6 +113,7 @@ export const SmallControls = ({
 
 const styles = StyleSheet.create({
   button: {
-    marginRight: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
 });
