@@ -212,7 +212,8 @@
       :animated animated
       :handleAddRoutine (fn [props] (rf/dispatch [:add-routine props]))
       :settingsData [{:title "Admin stuff" :data [{:label "version 0.0.12"}
-                                                  {:label "Wipe Db" :action #(rf/dispatch [:wipe-db])}]}]
+                                                  {:label "Wipe Db" :action #(rf/dispatch [:wipe-db])}
+                                                  {:label "Register for notifications" :action #(c/register-notifications)}]}]
       :handlePress
       (fn [^js a]
         (rf/dispatch

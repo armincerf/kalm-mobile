@@ -215,7 +215,6 @@
                                             left
                                             " left to go!"))))]
                  (log "sending" #js [idx (:name next-activity) message " in " (/ trigger-time 1000)] )
-                 (c/register-notifications)
                  (c/send-notification (clj->js (assoc next-activity :message message)) (/ trigger-time 1000))))))
          activities))))))
 

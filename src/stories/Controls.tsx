@@ -3,6 +3,7 @@ import { Button, HStack } from "native-base";
 import React from "react";
 import { TouchableOpacity, StyleSheet } from "react-native";
 import Timeout from "smart-timeout";
+import { vibrate } from "./utils";
 
 export const Controls = ({
   handlePrev,
@@ -86,6 +87,7 @@ export const SmallControls = ({
         <TouchableOpacity
           activeOpacity={0.45}
           style={styles.button}
+          onPressIn={() => vibrate()}
           onPress={() => {
             paused ? handlePlay(id) : handlePause(id);
             setTimeout(
@@ -104,6 +106,7 @@ export const SmallControls = ({
         <TouchableOpacity
           activeOpacity={0.75}
           style={styles.button}
+          onPressIn={() => vibrate()}
           onPress={() => handleNext(id)}
         >
           <FontAwesome5 name={"check"} size={24} color={iconColor} />
@@ -112,7 +115,11 @@ export const SmallControls = ({
       <TouchableOpacity
         activeOpacity={0.75}
         style={styles.button}
-        onPress={() => handleStop(id)}
+        onPressIn={() => vibrate()}
+        onPress={() => {
+          vibrate();
+          handleStop(id);
+        }}
       >
         <FontAwesome5 name={"times"} size={24} color={iconColor} />
       </TouchableOpacity>

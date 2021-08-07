@@ -1,10 +1,13 @@
 import { FontAwesome5 } from "@expo/vector-icons";
-import { Box, HStack, VStack, Image, Text } from "native-base";
+import { Box, HStack, VStack, Image, Text, Divider } from "native-base";
 import React from "react";
 import { Dimensions, StyleSheet } from "react-native";
 import { TouchableOpacity } from "react-native";
 import { SmallControls } from "./Controls";
 import { Activity, Routine, RoutineListProps } from "./RoutineList";
+import { COLOR_HIGHLIGHT, useInterval } from "./utils";
+import ProgressBar from "react-native-progress/Bar";
+import Timeout from "smart-timeout";
 
 type Props = {
   // can I really not do ...RoutineListProps or something??
@@ -34,6 +37,16 @@ export default ({
   isDark,
   ...props
 }: Props) => {
+  const [currentPosition, setCurrentPosition] = React.useState(0);
+  const position = () => (Timeout.exists(id) ? Timeout.remaining(id) : 0);
+  useInterval(() => {
+    const pos = position();
+    const elapsed = currentActivity.duration - pos;
+    const progress = elapsed / currentActivity.duration;
+    if (0 < progress && progress < 1) {
+      setCurrentPosition(progress);
+    }
+  }, 100);
   return (
     <Box
       w="100%"
@@ -42,7 +55,7 @@ export default ({
       px={4}
       pt={2}
       key={id + index}
-      borderBottomColor={isDark ? "gray.300" : "gray.700"}
+      borderBottomColor={isDark ? "gray.800" : "gray.200"}
       borderBottomWidth={index >= activeRoutines.length - 1 ? "0px" : "1px"}
     >
       <HStack justifyContent="space-between">
@@ -96,6 +109,16 @@ export default ({
           style={styles.button}
         ></TouchableOpacity>
       </HStack>
+      {Boolean(currentActivity?.duration) && (
+        <ProgressBar
+          color={COLOR_HIGHLIGHT}
+          useNativeDriver
+          progress={currentPosition}
+          width={null}
+          borderWidth={0}
+          height={2}
+        />
+      )}
     </Box>
   );
 };

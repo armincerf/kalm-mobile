@@ -5,6 +5,7 @@
    [cljs.core.async.interop :refer-macros [<p!]]
    [clojure.edn :as edn]
    [re-frame.core :as rf]
+   [app.components :as c]
    [potpuri.core :as p]))
 
 (def push-ups
@@ -196,4 +197,5 @@
           (distinct-by :id (concat (:my-routines db-from-string) default-routines))
           with-default-routines
           (assoc-in db [:persisted-state :my-routines] (vec routines-plus-defaults))]
+      (c/register-notifications)
       (rf/dispatch [:initialize-db with-default-routines]))))

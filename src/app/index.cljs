@@ -109,12 +109,14 @@
                                  #(views/routines % animated))})
             (screen {:name "EditRoutine"
                      :options {:title (str "Editing " (:name routine))
+                               :headerBackTitle " "
                                :headerTintColor (if dark-mode?
                                                   c/highlight
                                                   c/accent)}
                      :component (r/reactify-component #(views/edit-routine % animated))})
             (screen {:name "Routine"
                      :options #js {:title (or (:name routine) "Routine")
+                                   :headerBackTitle " "
                                    :headerTintColor (if dark-mode?
                                                       c/highlight
                                                       c/accent)}
