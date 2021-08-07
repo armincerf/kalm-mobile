@@ -6,38 +6,16 @@ import {
   View,
   Text,
   Heading,
-  StatusBar,
   Center,
-  Pressable,
   Image,
-  SectionList,
-  Icon,
   Divider,
   FlatList,
   VStack,
   HStack,
   useColorModeValue,
 } from "native-base";
-import {
-  StyleSheet,
-  Animated,
-  TouchableOpacity,
-  Dimensions,
-} from "react-native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import AddRoutines from "./AddRoutines";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-import { COLOR_ACCENT, COLOR_HIGHLIGHT, TAB_HEIGHT } from "./utils";
-import { Settings } from "./Settings";
-import { SwipeItem, SwipeUnderlay } from "./SwipeItem";
-import { UnderlayParams } from "react-native-swipeable-item";
-import { TabBar } from "./TabBar";
-import SeekBar from "./SeekBar";
-import { Controls } from "./Controls";
+import { Animated, TouchableOpacity, Dimensions } from "react-native";
+import { COLOR_ACCENT, COLOR_HIGHLIGHT } from "./utils";
 import { Player } from "./PlayerModal";
 import { Portal } from "react-native-portalize";
 const humanizeDuration = require("humanize-duration");
@@ -161,10 +139,11 @@ export const PlayListView = ({
   return (
     <FlatList
       data={activities}
-      contentContainerStyle={{ flexGrow: 1 }}
+      scrollIndicatorInsets={{right: Number.MIN_VALUE}}
       ListHeaderComponent={playerHeader}
       ListFooterComponent={() => (
         <Text
+        pb={2}
           m={4}
           color="gray.500"
         >{`${activities.length} activities, ${secondsText}`}</Text>
@@ -275,7 +254,6 @@ export default ({ handleStart, ...props }) => {
           modalRef?.current && modalRef.current.open();
           handleStart(i);
         }}
-        modalRef={modalRef}
         bg={bg}
         accent={accent}
       />

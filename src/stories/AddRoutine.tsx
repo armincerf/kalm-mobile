@@ -62,15 +62,19 @@ const AddRoutine = ({ field, index, ...props }) => {
     () => descriptionRef?.current?.focus(),
     [descriptionRef]
   );
-  const durationName = `routines.${index}.duration`;
+  const durationName = `routines.${index}.durationObj`;
 
   const Toggle = ({ name, label, value }) => {
     return (
-      <HStack style={{
-flex: 1,
-        justifyContent: "space-between",
-      }}>
-        <Text isTruncated w="80%" noOfLines={2} my={2}>{label}</Text>
+      <HStack
+        style={{
+          flex: 1,
+          justifyContent: "space-between",
+        }}
+      >
+        <Text isTruncated w="80%" noOfLines={2} my={2}>
+          {label}
+        </Text>
         <Controller
           control={props.control}
           rules={{
@@ -130,9 +134,10 @@ flex: 1,
     const values = useWatch({
       control,
       name: names,
+      defaultValue: [field?.hasNotification, field?.hasGif, Boolean(field?.durationObj)]
     });
+    
     const [_notif, _gif, duration]: boolean[] = values;
-
     return (
       <>
         <Accordion allowMultiple my={4}>
@@ -156,6 +161,7 @@ flex: 1,
         {Boolean(duration) && (
           <FormDurationInput
             {...props}
+            defaultValue={field?.durationObj}
             name={durationName}
             label="Duration in seconds"
           />

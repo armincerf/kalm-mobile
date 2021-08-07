@@ -231,7 +231,7 @@
  [base-interceptors]
  (fn [{:keys [db]} [_ routine-id]]
    (let [idx (get-in db [:persisted-state routine-id :current-idx])
-         activities (get-in db [:state :current-routine :activities])
+         {:keys [activities]} (db/routine-by-id db routine-id)
          path [:persisted-state routine-id :scheduled?]]
      (if (get-in db path)
        (log "already scheduled" routine-id)
@@ -240,8 +240,9 @@
        ;; input)
        (let [to-notify (->> activities
                             (drop idx)
-                            (remove :disableNotifications)
+                            (filter :hasNotification)
                             (take-while+ :duration))]
+         (prn "to notify = " to-notify)
          (when (seq to-notify)
            {:fx [[:notifs/schedule! to-notify]]
             :db (assoc-in db path true)}))))))
@@ -283,19 +284,21 @@
                   (empty? name)))
                (mapv
                 (fn process-routine
-                  [{:keys [duration] :as routine}]
-                  (let [{:keys [hours minutes seconds]} duration
-                        parse (fn [t] (if (seq (str t)) (long t) 0))
-                        hourSecs (* (parse hours) 3600)
-                        minSecs (* (parse minutes) 60)
-                        processed-duration (* (+ (parse seconds)
-                                                 minSecs hourSecs)
-                                              1000)]
-                    (assoc routine
-                           :duration
-                           (if (pos? processed-duration)
-                             processed-duration
-                             false)))))
+                  [{:keys [durationObj hasDuration] :as routine}]
+                  (if hasDuration
+                    (let [{:keys [hours minutes seconds]} durationObj
+                          parse (fn [t] (if (seq (str t)) (long t) 0))
+                          hourSecs (* (parse hours) 3600)
+                          minSecs (* (parse minutes) 60)
+                          processed-duration (* (+ (parse seconds)
+                                                   minSecs hourSecs)
+                                                1000)]
+                      (assoc routine
+                             :duration
+                             (if (pos? processed-duration)
+                               processed-duration
+                               false)))
+                    (dissoc routine :duration :durationObj))))
                vec))
         routine {:id (str (or (:id data) (gensym (:routineName data))))
                  :name (:routineName data)
@@ -305,7 +308,7 @@
     (when (:id routine)
       {:db (if existing-routine-index
              (assoc-in db [:persisted-state :my-routines existing-routine-index] routine)
-             (update-in db [:persisted-state :my-routines] conj routine))})))
+             (update-in db [:persisted-state :my-routines] p/consv routine))})))
 
 (defn routine? [page] (= "Routine" page))
 

@@ -78,20 +78,12 @@ const renderUnderlayLeft = (
 
 const Routines = (props: RoutineListProps) => {
   const insets = useSafeAreaInsets();
-  const {
-    data,
-    handlePress,
-    handleEditRoutine,
-    handleDeleteRoutine,
-    activeRoutines,
-  } = props;
-  const scheme = useColorScheme();
-  const isDark = scheme === "dark";
+  const { data, handlePress, handleEditRoutine, handleDeleteRoutine } = props;
   return (
-    <View flex={1} position="relative" h="100%">
+    <View style={styles.routineList}>
       <StatusBar barStyle={"default"} />
       <View p={4} flex={1}>
-        <Heading pb={4}>All Routines</Heading>
+        <Heading pb={4} pt={insets.top}>All Routines</Heading>
         <SectionList
           sections={data}
           ItemSeparatorComponent={() => <Divider bg="white" />}
@@ -242,5 +234,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  routineList: {
+    flex: 1,
+    position: "relative",
+    height: "100%",
   },
 });

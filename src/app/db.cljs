@@ -8,17 +8,22 @@
    [app.components :as c]
    [potpuri.core :as p]))
 
+(defn mins->obj
+  [min]
+  {:minutes min
+   :seconds 0})
+
 (def push-ups
   {:name "Push ups"
    :description "Hold arms in good way and push in the up direction"
    :pre-activity [{:name "Get in the position"
                    :image {:still "https://www.memecreator.org/static/images/memes/4789102.jpg"}}]
    :activities [{:name "Push down"
-                 :duration 2000
+                 :durationObj {:seconds 2}
                  :image {:still "https://www.wikihow.com/images/thumb/5/53/Do-a-Push-Up-Step-15-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-15-Version-3.jpg"}}
                 {:name "Push up"
                  :image {:still "https://www.wikihow.com/images/thumb/9/98/Do-a-Push-Up-Step-13-Version-3.jpg/aid11008-v4-728px-Do-a-Push-Up-Step-13-Version-3.jpg"}
-                 :duration 1000}]
+                 :durationObj {:seconds 1}}]
    :post-activity [{:name "Nice work! Go eat a cake"
                     :image {:still "https://memegenerator.net/img/instances/45717809.jpg"}}]})
 
@@ -26,7 +31,7 @@
   {:name "Jumping Jacks"
    :description "Jump as many times as you can"
    :activities [{:name "Jump as much as you can in the time limit, also do some jacks."
-                 :duration 100000000
+                 :durationObj {:hours 10 :minutes 10 :seconds 10}
 
                  :image {:still "https://media1.tenor.com/images/1c91aac996db1dec02eac2ddbd86ad30/tenor.gif"}}]})
 
@@ -55,15 +60,17 @@
    :activities [{:name "Brush Teeth"
                  :description "Hold brush and hit teeth with it"
                  :pre-activity [{:name "Get in the position"
-                                 :duration 3000}]
+                                 :durationObj {:seconds 3}}]
                  :activities [{:name "brush upper left"
-                               :duration 30000}
+                               :durationObj {:seconds 30}}
                               {:name "brush upper right"
-                               :duration 30000}
+                               :durationObj {:seconds 30}}
                               {:name "brush lower left"
-                               :duration 30000}
+                               :durationObj {:seconds 30}}
+
                               {:name "brush lower right"
-                               :duration 30000}]
+                               :durationObj {:seconds 30}}
+                              ]
                  :post-activity [{:name "Rinse mouth"}]}
                 {:name "shower"
                  :description "get water on you"
@@ -72,31 +79,27 @@
                  :description "get into bed and close eyes"
                  :activities [{:name "go to sleep"}]}]})
 
-(defn mins->millis
-  [min]
-  (* min 60 1000))
-
 (def chores
   [{:name "Hoover"
-    :duration (mins->millis 15)}
+    :durationObj (mins->obj 15)}
    {:name "Sort through files (post/paperwork etc)"
-    :duration (mins->millis 5)}
+    :durationObj (mins->obj 5)}
    {:name "Clean up rubbish"
-    :duration (mins->millis 10)}
+    :durationObj (mins->obj 10)}
    {:name "Put on a wash"
-    :duration (mins->millis 5)}
+    :durationObj (mins->obj 5)}
    {:name "Put Clothes Away"
-    :duration (mins->millis 10)}
+    :durationObj (mins->obj 10)}
    {:name "Do the dusting"
-    :duration (mins->millis 15)}
+    :durationObj (mins->obj 15)}
    {:name "Wipe the surfaces"
-    :duration (mins->millis 10)}
+    :durationObj (mins->obj 10)}
    {:name "Change the bedclothes"
-    :duration (mins->millis 10)}
+    :durationObj (mins->obj 10)}
    {:name "Clean the bathroom"
-    :duration (mins->millis 30)}
+    :durationObj (mins->obj 30)}
    {:name "Clean the kitchen"
-    :duration (mins->millis 20)}])
+    :durationObj (mins->obj 20)}])
 
 (def random-chores
   {:name "Random Chores"
@@ -155,7 +158,7 @@
                 activity (if activity?
                            props
                            (:activity props))
-                activities (if (some? (:duration props))
+                activities (if (some? (or (:durationObj props) (:duration props)))
                              [props]
                              (:activities activity))
                 cycle-count (or (:cycle-count props)
@@ -167,8 +170,18 @@
         gen-activities (fn [activities]
                          (for [props activities]
                            (gen-activity props)))
+        add-duration (fn [{:keys [durationObj] :as activity}]
+                       (assoc activity :duration
+                              (+ (* (:hours durationObj) 60 60 1000)
+                                 (* (:minutes durationObj) 60 100)
+                                 (* (:seconds durationObj) 1000))))
         activities
-        (remove nil? (flatten (gen-activities (:activities root-activity))))
+        (->> root-activity
+             :activities
+             gen-activities
+             flatten
+             (remove nil?)
+             (mapv add-duration))
         total-time (reduce
                     (fn [count activity]
                       (+ count (:duration activity)))
@@ -197,5 +210,6 @@
           (distinct-by :id (concat (:my-routines db-from-string) default-routines))
           with-default-routines
           (assoc-in db [:persisted-state :my-routines] (vec routines-plus-defaults))]
-      (c/register-notifications)
+      (when-not c/web?
+        (c/register-notifications))
       (rf/dispatch [:initialize-db with-default-routines]))))

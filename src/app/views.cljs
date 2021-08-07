@@ -162,7 +162,6 @@
       (doall
        (map-indexed
         (fn [idx activity]
-          (prn "add image" activity)
           (add-random-activity-image activity id idx))
         activities)))
     :reagent-render

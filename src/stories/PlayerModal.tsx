@@ -75,21 +75,7 @@ export const Player = forwardRef(
                       outputRange: [0.18, 1],
                       extrapolate: "clamp",
                     }),
-                  },
-                  {
-                    translateY: animated.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-500, 0],
-                      extrapolate: "clamp",
-                    }),
-                  },
-                  {
-                    translateX: animated.interpolate({
-                      inputRange: [0, 0.7, 1],
-                      outputRange: [-Dimensions.get("window").width, 10, 0],
-                      extrapolate: "clamp",
-                    }),
-                  },
+                  }
                 ],
                 opacity: animated.interpolate({
                   inputRange: [0, 0.7, 1],
