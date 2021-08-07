@@ -54,8 +54,7 @@
         !navigation-ref (clojure.core/atom {})
         page @(rf/subscribe [:page])
         routine (when (routine? (:name page))
-                  (or (:props page)
-                      (:storedRoutine page)))]
+                  @(rf/subscribe [:current-routine]))]
     [:> NativeBaseProvider
      {:theme customTheme}
      [:> nav/NavigationContainer
@@ -104,7 +103,7 @@
                     :transform [{:scale (interpolate 1 0.92)}]
                     :opacity (interpolate 1 0.75)}}
            [:> (.-Navigator ^js stack)
-            (screen {:name "Home"
+            (screen {:name "My Routines"
                      :options {:headerShown false}
                      :component (r/reactify-component
                                  #(views/routines % animated))})
@@ -115,10 +114,10 @@
                                                   c/accent)}
                      :component (r/reactify-component #(views/edit-routine % animated))})
             (screen {:name "Routine"
-                     :options {:title (or (:name routine) "Routine")
-                               :headerTintColor (if dark-mode?
-                                                  c/highlight
-                                                  c/accent)}
+                     :options #js {:title (or (:name routine) "Routine")
+                                   :headerTintColor (if dark-mode?
+                                                      c/highlight
+                                                      c/accent)}
                      :component (r/reactify-component #(screen-main % animated))})]])]]]]))
 
 (defn start

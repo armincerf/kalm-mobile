@@ -13,6 +13,7 @@ export const Controls = ({
   hasNext,
   duration,
   id,
+  modalRef,
   ...props
 }) => {
   const isPaused = !Timeout.exists(id) || Timeout.paused(id);
@@ -42,7 +43,15 @@ export const Controls = ({
           />
         </TouchableOpacity>
       ) : (
-        <Button variant="outline" onPress={handleNext}>
+        <Button
+          variant="outline"
+          onPress={() => {
+            handleNext();
+            if (!hasNext && modalRef?.current) {
+              modalRef.current.close();
+            }
+          }}
+        >
           Mark Complete
         </Button>
       )}

@@ -256,11 +256,10 @@ export const PlayListView = ({
 export default ({ handleStart, ...props }) => {
   const bg = useColorModeValue("gray.200", "gray.800");
   const accent = useColorModeValue(COLOR_ACCENT, COLOR_HIGHLIGHT);
-  const { bottom } = useSafeAreaInsets();
   const animated = useRef(new Animated.Value(0)).current;
   const modalRef = useRef(null);
   return (
-    <View style={{ paddingBottom: bottom, flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <Portal>
         <Player
           {...props}

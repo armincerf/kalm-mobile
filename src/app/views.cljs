@@ -181,7 +181,6 @@
                                  :animated animated
                                  :routine routine
                                  :handleStart #(rf/dispatch [:start-routine id %])
-
                                  :handleShuffle #(rf/dispatch [:shuffle-routine id])
                                  :handleNext #(rf/dispatch [:skip-activity id])
                                  :handlePlay #(rf/dispatch [:resume id])
@@ -216,17 +215,18 @@
                                                   {:label "Wipe Db" :action #(rf/dispatch [:wipe-db])}]}]
       :handlePress
       (fn [^js a]
-        (prn "nav" (.-id a))
         (rf/dispatch
          [:navigate navigation "Routine"
           (.-id a)]))}]))
 
 
 (defn edit-routine
-  [_nav animated]
+  [{:keys [navigation]} animated]
   (let [routine @(rf/subscribe [:current-routine])]
-    (def routine routine)
-    [:> c/AddRoutine
-     {:storedRoutine routine
-      :animated animated
-      :handleSubmit (fn [props] (rf/dispatch [:add-routine props]))}]))
+    (when (:activities routine)
+      [:> c/AddRoutine
+       {:storedRoutine routine
+        :animated animated
+        :handleSubmit (fn [props]
+                        (rf/dispatch [:add-routine props])
+                        (.goBack navigation))}])))

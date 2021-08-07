@@ -64,6 +64,7 @@ type Item = {
 type FormValues = {
   routineName: string;
   type?: string;
+  id?: string;
   routines: Item[];
 };
 
@@ -86,10 +87,14 @@ const defaultRoutine = (i: number) => {
 export default ({
   handleSubmit,
   animated,
-  storedRoutine = { activities: [] },
+  storedRoutine = {
+    name: "",
+    type: null,
+    id: null,
+    activities: [],
+  },
   ...props
 }) => {
-  
   const initialRoutines: Item[] = storedRoutine.activities.map((r, index) => {
     const routine = {
       ...defaultRoutine(index),
@@ -100,8 +105,9 @@ export default ({
 
   const formMethods = useForm<FormValues>({
     defaultValues: {
-      routineName: "",
-      type: "",
+      routineName: storedRoutine?.name,
+      type: storedRoutine?.type || "",
+      id: storedRoutine?.id,
       routines: initialRoutines,
     },
   });
@@ -280,6 +286,7 @@ export default ({
 
         <FormTextInput
           {...formMethods}
+          defaultValue=""
           name="routineName"
           label="Routine Name"
           rules={{ required: "Routine Name is required!" }}

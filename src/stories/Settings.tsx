@@ -30,7 +30,6 @@ export const Settings = ({ data }) => {
             px={5}
             py={2}
             rounded="md"
-            my={2}
             bg="primary.200"
             _text={{
               fontWeight: "bold",

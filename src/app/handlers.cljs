@@ -269,7 +269,7 @@
         existing-routine-index (p/find-index current-routines {:id id})]
     (when existing-routine-index
       (log "deleting routine" {:id id})
-      {:db (p/dissoc-in db [:persisted-state :my-routines existing-routine-index])})))
+      {:db (assoc-in db [:persisted-state :my-routines existing-routine-index] nil)})))
 
 (defn add-routine
   [{:keys [db]} [_ form-data]]

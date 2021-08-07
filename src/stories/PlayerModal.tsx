@@ -45,13 +45,15 @@ export const Player = forwardRef(
     const renderContent = () => {
       useEffect(() => {
         if (isOpen && !currentActivity && modalizeRef?.current) {
+          console.log("closing");
           modalizeRef.current.close();
         }
       }, [currentActivity]);
       useEffect(() => {
         setTimeout(() => {
           currentActivity &&
-            props.isRunning &&
+            props?.isRunning &&
+            props?.hasNext &&
             modalizeRef?.current &&
             modalizeRef.current.open();
         }, 100);
@@ -133,7 +135,12 @@ export const Player = forwardRef(
                 </Box>
               )}
             </VStack>
-            <Controls {...props} id={routine.id} isDark={isDark} />
+            <Controls
+              {...props}
+              modalRef={combinedRef}
+              id={routine.id}
+              isDark={isDark}
+            />
           </VStack>
         </>
       );

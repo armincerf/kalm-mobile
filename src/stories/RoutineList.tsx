@@ -14,7 +14,12 @@ import {
   HStack,
   VStack,
 } from "native-base";
-import { Dimensions, Platform, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  Dimensions,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AddRoutines from "./AddRoutines";
 import { AntDesign, FontAwesome5, Ionicons } from "@expo/vector-icons";
@@ -67,26 +72,7 @@ const Routines = (props: RoutineListProps) => {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
   return (
-    <View flex={1} position="relative" h="100%" pt={insets.top}>
-      <View style={[styles.currentRoutines, { width: "100%" }]}>
-        <BlurView
-          intensity={100}
-          tint={isDark ? "dark" : "light"}
-          style={[ (Platform.OS !== "android" && styles.blurTab), { paddingBottom: insets.bottom }]}
-        >
-          {activeRoutines.map((activityProps, index) => {
-            return (
-              <ActiveRoutine
-                key={index}
-                {...props}
-                {...activityProps}
-                index={index}
-                isDark={isDark}
-              />
-            );
-          })}
-        </BlurView>
-      </View>
+    <View flex={1} position="relative" h="100%">
       <StatusBar barStyle={"default"} />
       <View p={4} flex={1}>
         <Heading pb={4}>All Routines</Heading>
@@ -179,8 +165,8 @@ export default (props: RoutineListProps) => {
     <>
       <StatusBar barStyle="dark-content" />
       <Tab.Navigator
-        tabBar={(props) => {
-          return <TabBar {...props} />;
+        tabBar={(tabProps) => {
+          return <TabBar {...tabProps} {...props} />;
         }}
       >
         <Tab.Screen
@@ -228,12 +214,6 @@ export default (props: RoutineListProps) => {
 };
 
 const styles = StyleSheet.create({
-  currentRoutines: {
-    position: "absolute",
-    bottom: 50,
-    zIndex: 999,
-    elevation: 3,
-  },
   underlayLeft: {
     flex: 1,
     backgroundColor: "gray",

@@ -34,8 +34,6 @@ export default ({
   isDark,
   ...props
 }: Props) => {
-  console.log("render", id, index);
-
   return (
     <Box
       w="100%"
@@ -82,7 +80,7 @@ export default ({
             >
               {currentActivity?.routineName}
             </Text>
-            <Text isTruncated>{currentActivity?.name || "foo"}</Text>
+            <Text isTruncated>{currentActivity?.name}</Text>
           </VStack>
         </HStack>
         <SmallControls

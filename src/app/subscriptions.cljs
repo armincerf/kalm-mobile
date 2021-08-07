@@ -24,8 +24,10 @@
 
 (rf/reg-sub
  :current-routine
- (fn [db _]
-   (when-let [id (get-in db [:current-page :props])]
+ (fn [db [_ id]]
+   (when-let [id (or id
+                     (get-in db [:current-page :props :id])
+                     (get-in db [:current-page :props]))]
      (db/routine-by-id db id))))
 
 (rf/reg-sub
