@@ -14,7 +14,7 @@
 (defn log
   ([message] (log message {}))
   ([message data]
-   (js/console.log message data)
+   (js/console.log message (clj->js data))
    (when-not c/web?
      (.track c/analytics message (clj->js data)))
    nil))
@@ -92,7 +92,7 @@
         activities (vec (:activities routine))
         activity (get activities idx)
         next (get activities (inc idx))]
-    (log "start routine2" (:name routine))
+    (log "start routine2" {:name (:name routine) :id id})
     {:db (-> db
              (assoc-in [:persisted-state id :current-idx] idx)
              (assoc-in [:persisted-state id :current-activity] (assoc activity

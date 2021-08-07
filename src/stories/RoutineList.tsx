@@ -14,7 +14,7 @@ import {
   HStack,
   VStack,
 } from "native-base";
-import { Dimensions, StyleSheet, TouchableOpacity } from "react-native";
+import { Dimensions, Platform, StyleSheet, TouchableOpacity } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AddRoutines from "./AddRoutines";
 import { AntDesign, FontAwesome5, Ionicons } from "@expo/vector-icons";
@@ -72,7 +72,7 @@ const Routines = (props: RoutineListProps) => {
         <BlurView
           intensity={100}
           tint={isDark ? "dark" : "light"}
-          style={[styles.blurTab, { paddingBottom: insets.bottom }]}
+          style={[ (Platform.OS !== "android" && styles.blurTab), { paddingBottom: insets.bottom }]}
         >
           {activeRoutines.map((activityProps, index) => {
             return (
@@ -232,6 +232,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 50,
     zIndex: 999,
+    elevation: 3,
   },
   underlayLeft: {
     flex: 1,

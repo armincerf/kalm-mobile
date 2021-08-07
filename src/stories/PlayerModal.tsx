@@ -44,7 +44,7 @@ export const Player = forwardRef(
 
     const renderContent = () => {
       useEffect(() => {
-        if (isOpen && !props.isRunning && modalizeRef?.current) {
+        if (isOpen && !currentActivity && modalizeRef?.current) {
           modalizeRef.current.close();
         }
       }, [currentActivity]);

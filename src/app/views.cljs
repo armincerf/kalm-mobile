@@ -194,60 +194,6 @@
                                  :isPaused paused?
                                  :isRunning running?}]))))}))
 
-(comment
-  [:<>
-           [:> Box
-            {:py 2
-             :px 2
-             :rounded "md"}
-            [:> Heading name]
-            [:> Text description]
-            [:> Button
-             {:size "sm"
-              :m 3
-              :on-press #(swap! show-preview? not)}
-             (if @show-preview? "Hide Preview" "Show Preview")]
-            [:> HStack
-             {:space 1
-              :alignItems "center"}
-             (when-not running?
-               [:> Button
-                {:m 3
-                 :size "sm"
-                 :on-press #(rf/dispatch [:start-routine routine 0])}
-                "Click to start routine"])
-             (when running?
-               (let [paused? @(rf/subscribe [:paused? id])
-                     next-activity?
-                     @(rf/subscribe [:persisted-state [id :next-activity]])]
-                 [:<>
-                  (when (and next-activity? (not no-duration?))
-                    [:> Button
-                     {:size "sm"
-                      :m 3
-                      :on-press #(rf/dispatch [:next-activity id])}
-                     "Skip"])
-                  (when-not no-duration?
-                    [:> Button
-                     {:size "sm"
-                      :m 3
-                      :on-press #(rf/dispatch [(if paused? :resume :pause) id])}
-                     (if paused? "Resume" "Pause")])
-                  (when (or next-activity? (not no-duration?))
-                    [:> Button
-                     {:size "sm"
-                      :m 3
-                      :on-press #(rf/dispatch [:stop id])}
-                     "Stop"])]))]
-
-            (when no-duration?
-              [no-duration-button id])
-
-            (when current-activity
-              [activity-view current-activity])]
-           (when @show-preview?
-             [routine-view routine])])
-
 (defn routines
   [{:keys [navigation]} animated]
   (let [saved-routines (remove nil? @(rf/subscribe [:persisted-state [:my-routines]]))

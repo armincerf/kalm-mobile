@@ -48,12 +48,6 @@ export default ({
       borderBottomWidth={index >= activeRoutines.length - 1 ? "0px" : "1px"}
     >
       <HStack justifyContent="space-between">
-        <TouchableOpacity
-          onPress={() => {
-            handlePress({ id: id });
-          }}
-          style={styles.button}
-        ></TouchableOpacity>
         <HStack h="100%" w="80%" alignItems="center">
           <Box
             bg="black"
@@ -86,12 +80,9 @@ export default ({
               isTruncated
               color="gray.400"
             >
-                {currentActivity?.routineName}
+              {currentActivity?.routineName}
             </Text>
-            <Text
-
-              isTruncated
-             >{currentActivity?.name || "foo"}</Text>
+            <Text isTruncated>{currentActivity?.name || "foo"}</Text>
           </VStack>
         </HStack>
         <SmallControls
@@ -100,6 +91,12 @@ export default ({
           duration={currentActivity?.duration}
           iconColor={isDark ? "white" : "black"}
         />
+        <TouchableOpacity
+          onPress={() => {
+            handlePress({ id: id });
+          }}
+          style={styles.button}
+        ></TouchableOpacity>
       </HStack>
     </Box>
   );
@@ -114,5 +111,6 @@ const styles = StyleSheet.create({
     width: Dimensions.get("window").width * 0.7,
     height: 60,
     zIndex: 20,
+    elevation: 2,
   },
 });

@@ -75,9 +75,9 @@ export function TabBar({ state, descriptors, navigation }) {
             ? {
                 alignItems: "center",
                 justifyContent: "center",
-                width: TAB_HEIGHT,
-                height: TAB_HEIGHT,
-                transform: [{ translateY: -10 }],
+                width: TAB_HEIGHT - 10,
+                height: TAB_HEIGHT - 10,
+                transform: [{ translateY: -13 }],
                 backgroundColor: COLOR_ACCENT,
                 borderRadius: 50,
               }
