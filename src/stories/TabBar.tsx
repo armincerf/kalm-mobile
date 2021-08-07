@@ -112,7 +112,7 @@ export function TabBar({ state, descriptors, navigation, ...props }) {
       tint={scheme}
       style={[styles.blurTab, { paddingBottom: insets.bottom }]}
     >
-      <View style={[styles.currentRoutines, { width: "100%" }]}>
+      <View style={styles.currentRoutines}>
         {Boolean(props?.activeRoutines) &&
           props.activeRoutines
             .filter((r) => r?.currentActivity?.name)
@@ -134,7 +134,7 @@ export function TabBar({ state, descriptors, navigation, ...props }) {
 }
 const styles = StyleSheet.create({
   currentRoutines: {
-    
+   width: "100%", 
   },
   blurTab: {
     position: "absolute",

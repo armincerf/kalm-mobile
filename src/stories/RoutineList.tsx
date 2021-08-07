@@ -15,6 +15,7 @@ import {
   VStack,
 } from "native-base";
 import {
+  Alert,
   Dimensions,
   Platform,
   StyleSheet,
@@ -48,7 +49,22 @@ const renderUnderlayLeft = (
   <Animated.View style={[styles.underlayLeft, { opacity: percentOpen }]}>
     <SwipeUnderlay
       bg="secondary.600"
-      pressFn={() => del(item.id)}
+      pressFn={() => {
+        Alert.alert(
+          "Are you sure?",
+          "Are you sure you want to delete this routine? This cannot be undone",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+            {
+              text: "Delete",
+              onPress: () => del(item.id),
+            },
+          ]
+        );
+      }}
       iconName="delete"
     />
     <SwipeUnderlay
