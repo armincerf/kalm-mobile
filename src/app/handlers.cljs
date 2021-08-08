@@ -7,7 +7,8 @@
    ["@react-native-async-storage/async-storage" :default AsyncStorage]
    ["expo-notifications" :as Notifications]
    [app.db :as db]
-   [app.components :as c]))
+   [app.components :as c]
+   [clojure.string :as str]))
 
 (defn log
   ([message] (log message {}))
@@ -197,7 +198,10 @@
              (when (:name next-activity)
                (swap! duration #(+ % (:duration activity)))
                (let [trigger-time @duration
-                     left (str (/ (:duration next-activity) 1000) " seconds")
+                     left (str/join
+                           (interpose ", "
+                                      (for [[k v] (:durationObj activity)]
+                                        (str v " " (name k)))))
                      message (if-let [next (:name (get (vec activities) (+ 2 idx)))]
 
                                (rand-nth
@@ -210,10 +214,10 @@
                                      "extraPanik" (str "Yeah.. I wouldn't want to do it either...")))])
                                (str "Come back to the app when you're done!"
                                     (when (pos? (:duration next-activity))
-                                      (str  " Only"
+                                      (str  " Only "
                                             left
                                             " left to go!"))))]
-                 (log "sending" #js [idx (:name next-activity) message " in " (/ trigger-time 1000)] )
+                 (log "sending" #js [idx (:name next-activity) message " in " (/ trigger-time 1000)])
                  (c/send-notification (clj->js (assoc next-activity :message message)) (/ trigger-time 1000))))))
          activities))))))
 
@@ -311,10 +315,17 @@
                     activity)))
                flatten
                vec))
+        activities (parse-routines (:routines data))
+        total-time (reduce
+                    (fn [count activity]
+                      (+ count (:duration activity)))
+                    0
+                    activities)
         routine {:id (str (or (:id data) (gensym (:routineName data))))
                  :name (:routineName data)
                  :type (if (seq type) type "My Routines")
-                 :activities (parse-routines (:routines data))}
+                 :total-time total-time
+                 :activities activities}
         existing-routine-index (db/routine-id->index db (:id data))]
     (when (:id routine)
       {:db (if existing-routine-index
