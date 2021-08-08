@@ -18,6 +18,7 @@ import { Animated, TouchableOpacity, Dimensions } from "react-native";
 import { COLOR_ACCENT, COLOR_HIGHLIGHT } from "./utils";
 import { Player } from "./PlayerModal";
 import { Portal } from "react-native-portalize";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 const humanizeDuration = require("humanize-duration");
 
 export const PlayListView = ({
@@ -30,8 +31,9 @@ export const PlayListView = ({
   accent,
 }) => {
   const { name, description, totalTime, activities, type } = routine;
+  const insets = useSafeAreaInsets();
   const playerHeader = (
-    <>
+    <View style={{paddingTop: insets.top}}>
       <Center key="image">
         <Box
           bg="black"
@@ -39,7 +41,7 @@ export const PlayListView = ({
           h={250}
           shadow={9}
           borderRadius={5}
-          mt={4}
+          mt={insets.top + 6}
           mb={15}
         >
           {Boolean(activities.length > 3) ? (
@@ -130,7 +132,7 @@ export const PlayListView = ({
           <Text color={accent}>Shuffle</Text>
         </Button>
       </HStack>
-    </>
+    </View>
   );
 
   const secondsText =
@@ -139,11 +141,11 @@ export const PlayListView = ({
   return (
     <FlatList
       data={activities}
-      scrollIndicatorInsets={{right: Number.MIN_VALUE}}
+      scrollIndicatorInsets={{ right: Number.MIN_VALUE }}
       ListHeaderComponent={playerHeader}
       ListFooterComponent={() => (
         <Text
-        pb={2}
+          pb={2 + insets.bottom}
           m={4}
           color="gray.500"
         >{`${activities.length} activities, ${secondsText}`}</Text>

@@ -53,10 +53,10 @@
                  :activity jumping-jacks}]})
 
 (def shopping
-  {:name "Get ready for bed"
+  {:name "Go Shopping"
    :type "Daily Routines"
    :id "Shopping"
-   :description "Swipe to edit"
+   :description "Don't buy any sweets"
    :activities [{:name "Go to shops"
                  :durationObj {:minutes 5}}
                 {:name "Blueberries"}
@@ -149,7 +149,7 @@
    :type "Chores"
    :id "4"
    :hasGif true
-   :activities (vec (shuffle (map (fn [c] (assoc c :hasGif true)) chores)))})
+   :activities (vec (shuffle chores))})
 
 ;; from medley but cba to import it
 (defn distinct-by
@@ -201,11 +201,10 @@
                 activity (if activity?
                            props
                            (:activity props))
-                activities (if (some? (or (:durationObj props) (:duration props)))
-                             [props]
-                             (:activities activity))
-                cycle-count (or (:cycle-count props)
-                                (:cycleCount activity))]
+                activities (or
+                            (:activities activity)
+                            [props])
+                cycle-count (:cycleCount activity)]
             (concat
              (:pre-activity activity)
              (gen-cycles activities (or cycle-count 1))
@@ -214,16 +213,23 @@
                          (for [props activities]
                            (gen-activity props)))
         add-duration (fn [{:keys [durationObj] :as activity}]
-                       (assoc activity :duration
-                              (+ (* (:hours durationObj) 60 60 1000)
-                                 (* (:minutes durationObj) 60 1000)
-                                 (* (:seconds durationObj) 1000))))
+                       (if durationObj
+                         (assoc activity :duration
+                                (+ (* (:hours durationObj) 60 60 1000)
+                                   (* (:minutes durationObj) 60 1000)
+                                   (* (:seconds durationObj) 1000)))
+                         activity))
+        add-image (fn [{:keys [image] :as activity}]
+                    (if image
+                      activity
+                      (assoc activity :hasGif true)))
         activities
         (->> root-activity
              :activities
              gen-activities
              flatten
              (remove nil?)
+             (map add-image)
              (mapv add-duration))
         total-time (reduce
                     (fn [count activity]
@@ -246,12 +252,14 @@
                :version "version-not-set"}
               (when db-from-string
                 {:persisted-state db-from-string}))
-          default-routines (mapv gen-routine [my-activity
-                                              random-chores
-                                              lazy
+          default-routines (mapv gen-routine [random-chores
+                                              jumping-jacks
                                               shopping
                                               lunch-time
-                                              music])
+                                              music
+                                              my-activity
+                                              push-ups
+                                              lazy])
           routines-plus-defaults
           (distinct-by :id (concat (:my-routines db-from-string) default-routines))
           with-default-routines

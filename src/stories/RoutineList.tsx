@@ -7,15 +7,10 @@ import {
   SectionList,
   Divider,
 } from "native-base";
-import {
-  Alert,
-  StyleSheet,
-} from "react-native";
+import { Alert, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AddRoutines from "./AddRoutines";
-import {
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Settings } from "./Settings";
 import { SwipeItem, SwipeUnderlay } from "./SwipeItem";
 import { UnderlayParams } from "react-native-swipeable-item";
@@ -65,78 +60,74 @@ const Routines = (props: RoutineListProps) => {
   return (
     <View style={styles.routineList}>
       <StatusBar barStyle={"default"} />
-      <View p={4} flex={1}>
-        <Heading pb={4} pt={insets.top}>
-          All Routines
-        </Heading>
-        <SectionList
-          sections={data}
-          ItemSeparatorComponent={() => <Divider bg="white" />}
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingBottom: 80 + (props?.activeRoutines?.length || 0) * 55,
-          }}
-          keyExtractor={(item, index) => item + index}
-          renderItem={(props) => (
-            <SwipeItem
-              {...props}
-              drag={false}
-              renderUnderlayLeft={(props) =>
-                renderUnderlayLeft(
-                  props,
-                  handleDeleteRoutine,
-                  handleEditRoutine
-                )
-              }
-              handlePress={handlePress}
-            />
-          )}
-          renderSectionFooter={() => <View pb={4} />}
-          renderSectionHeader={({ section: { title } }) => {
-            let color;
-            switch (title) {
-              case "My Routines":
-                color = "green.300";
-                break;
-              case "Meditation":
-                color = "blue.300";
-                break;
-              case "Chores":
-                color = "orange.300";
-                break;
-              case "Daily Routines":
-                color = "red.300";
-                break;
-              case "Fitness":
-                color = "purple.300";
-                break;
-              case "Special Occasions":
-                color = "yellow.300";
-                break;
-              default:
-                color = "gray.300";
-                break;
+      <SectionList
+        sections={data}
+        ItemSeparatorComponent={() => <Divider bg="white" />}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: 80 + (props?.activeRoutines?.length || 0) * 55,
+        }}
+        keyExtractor={(item, index) => item + index}
+        ListHeaderComponent={() => (
+          <View pt={insets.top + 8} pb={4}>
+            <Heading>Routines</Heading>
+          </View>
+        )}
+        renderItem={(props) => (
+          <SwipeItem
+            {...props}
+            drag={false}
+            renderUnderlayLeft={(props) =>
+              renderUnderlayLeft(props, handleDeleteRoutine, handleEditRoutine)
             }
-            return (
+            handlePress={handlePress}
+          />
+        )}
+        renderSectionFooter={() => <View pb={4} />}
+        renderSectionHeader={({ section: { title } }) => {
+          let color;
+          switch (title) {
+            case "My Routines":
+              color = "green.300";
+              break;
+            case "Meditation":
+              color = "blue.300";
+              break;
+            case "Chores":
+              color = "orange.300";
+              break;
+            case "Daily Routines":
+              color = "red.300";
+              break;
+            case "Fitness":
+              color = "purple.300";
+              break;
+            case "Special Occasions":
+              color = "yellow.300";
+              break;
+            default:
+              color = "gray.300";
+              break;
+          }
+          return (
+            <Box
+              _text={{
+                fontSize: 14,
+              }}
+            >
               <Box
-                _text={{
-                  fontSize: 14,
-                }}
+                bg={color}
+                px={4}
+                py={2}
+                w="100%"
+                style={{ borderTopLeftRadius: 5, borderTopRightRadius: 5 }}
               >
-                <Box
-                  bg={color}
-                  px={4}
-                  py={2}
-                  w="100%"
-                  style={{ borderTopLeftRadius: 5, borderTopRightRadius: 5 }}
-                >
-                  {title}
-                </Box>
+                {title}
               </Box>
-            );
-          }}
-        />
-      </View>
+            </Box>
+          );
+        }}
+      />
     </View>
   );
 };
@@ -248,6 +239,7 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   routineList: {
+    paddingHorizontal: 16,
     flex: 1,
     position: "relative",
     height: "100%",

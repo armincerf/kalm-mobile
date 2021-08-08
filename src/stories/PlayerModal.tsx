@@ -174,6 +174,7 @@ const s = StyleSheet.create({
     alignSelf: "center",
     marginTop: HEADER_HEIGHT,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 32,
     width: Dimensions.get("window").width * 0.9,
     height: Dimensions.get("window").width * 0.9,
     shadowColor: "#000",

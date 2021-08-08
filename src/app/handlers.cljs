@@ -3,13 +3,11 @@
    [re-frame.core :as rf]
    [lambdaisland.fetch :as fetch]
    [potpuri.core :as p]
-   [re-frame.db :as rf-db]
    ["smart-timeout" :as timeout]
    ["@react-native-async-storage/async-storage" :default AsyncStorage]
    ["expo-notifications" :as Notifications]
    [app.db :as db]
-   [app.components :as c]
-   [reagent.core :as r]))
+   [app.components :as c]))
 
 (defn log
   ([message] (log message {}))
@@ -92,7 +90,6 @@
         activities (vec (:activities routine))
         activity (get activities idx)
         next (get activities (inc idx))]
-    (log "start routine2" {:name (:name routine) :id id})
     {:db (-> db
              (assoc-in [:persisted-state id :current-idx] idx)
              (assoc-in [:persisted-state id :current-activity] (assoc activity
@@ -106,6 +103,8 @@
                          (get activities (dec idx))))
              (assoc-in [:persisted-state id :next-activity] next))
      :fx [[:dispatch [:schedule-notifications! id]]
+          (when-not activity
+            [:dispatch [:routine-complete id]])
           (when-let [duration (:duration activity)]
             [:dispatch-later2
              {:ms duration

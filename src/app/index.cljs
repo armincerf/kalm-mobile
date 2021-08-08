@@ -1,22 +1,19 @@
 (ns app.index
   (:require
    ["@react-navigation/native" :as nav]
-   ["react-native-safe-area-context" :refer [SafeAreaProvider]]
    ["@react-navigation/stack" :as rn-stack]
-   ["expo-constants" :as expo-constants]
 
    ["react-native" :as rn]
-   ["tailwind-rn" :default tailwind-rn]
+   ["expo-blur$BlurView" :as BlurView]
    ["native-base" :refer [NativeBaseProvider
-                          extendTheme
-                          useColorMode]]
+                          extendTheme]]
    ["react-native-portalize" :refer [Host]]
    ["react" :refer [useRef]]
 
    [clojure.edn :as edn]
    [applied-science.js-interop :as j]
    [reagent.core :as r]
-   [re-frame.core :as rf :refer [dispatch-sync]]
+   [re-frame.core :as rf]
    [shadow.expo :as expo]
 
    [app.views :as views]
@@ -25,22 +22,13 @@
    [app.subscriptions]
    [app.db :as db]))
 
-(defn tw [style-str]
-  ;; https://github.com/vadimdemedes/tailwind-rn#supported-utilities
-  (-> style-str
-      tailwind-rn
-      (js->clj :keywordize-keys true)))
-
 (defn screen-main [_props animated]
   (let [{:keys [id] :as routine} @(rf/subscribe [:current-routine])
         current-activity @(rf/subscribe [:persisted-state [id :current-activity]])
-        running? (not (empty? current-activity))
-        active-routines @(rf/subscribe [:active-routines])]
+        running? (not (empty? current-activity))]
     [views/routine-player routine current-activity running? animated]))
 
 (def stack (rn-stack/createStackNavigator))
-
-(defn navigator [props] [:> (-> ^js stack .-Navigator) props])
 
 (defn screen [props] [:> (-> ^js stack .-Screen) props])
 
@@ -97,39 +85,38 @@
        ;;black view only visible when modal opens
        [:> rn/View {:style {:flex 1 :backgroundColor "#000"}}
         (let [interpolate (fn [from to] (.interpolate animated #js {:inputRange #js [0 1]
-                                                                    :outputRange #js [from to]}))]
+                                                                    :outputRange #js [from to]}))
+              header-options (fn [title]
+                               {:title title
+                                :headerBackTitle " "
+                                :headerTransparent true
+                                :headerMode "float"
+                                :headerBackground #(r/as-element
+                                                    [:> BlurView {:tint scheme
+                                                                  :intensity 100
+                                                                  :style (.-absoluteFill rn/StyleSheet)}])
+                                :headerTintColor (if dark-mode?
+                                                   c/highlight
+                                                   c/accent)})]
           [:> c/Layout
            {:style {:borderRadius (interpolate 0 20)
                     :transform [{:scale (interpolate 1 0.92)}]
                     :opacity (interpolate 1 0.75)}}
            [:> (.-Navigator ^js stack)
             (screen {:name "My Routines"
-                     :options {:headerShown false}
+                     :options (header-options "Home")
                      :component (r/reactify-component
                                  #(views/routines % animated))})
             (screen {:name "EditRoutine"
-                     :options {:title (str "Editing " (:name routine))
-                               :headerBackTitle " "
-                               :headerTintColor (if dark-mode?
-                                                  c/highlight
-                                                  c/accent)}
+                     :options (header-options (str "Editing " (:name routine)))
                      :component (r/reactify-component #(views/edit-routine % animated))})
             (screen {:name "Routine"
-                     :options #js {:title (or (:name routine) "Routine")
-                                   :headerBackTitle " "
-                                   :headerTintColor (if dark-mode?
-                                                      c/highlight
-                                                      c/accent)}
+                     :options (header-options (or (:name routine) "Routine"))
                      :component (r/reactify-component #(screen-main % animated))})]])]]]]))
 
 (defn start
   []
   (expo/render-root (r/as-element [:f> root])))
-
-(def version (-> expo-constants
-                 (j/get :default)
-                 (j/get :manifest)
-                 (j/get :version)))
 
 (defonce analytics
   (when-not c/web?

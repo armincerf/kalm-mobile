@@ -1,7 +1,5 @@
 (ns app.subscriptions
   (:require [re-frame.core :as rf]
-            ["smart-timeout" :as timeout]
-            [potpuri.core :as p]
             [app.db :as db]))
 
 (defn version [db _] (:version db))
