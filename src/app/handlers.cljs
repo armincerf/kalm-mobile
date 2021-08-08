@@ -282,8 +282,8 @@
                 (fn invalid-routine
                   [{:keys [name]}]
                   (empty? name)))
-               (mapv
-                (fn process-routine
+               (map
+                (fn process-durations
                   [{:keys [durationObj hasDuration] :as routine}]
                   (if hasDuration
                     (let [{:keys [hours minutes seconds]} durationObj
@@ -299,6 +299,18 @@
                                processed-duration
                                false)))
                     (dissoc routine :duration :durationObj))))
+               (map
+                (fn process-cycles
+                  [{:keys [cycleCount id description] :as activity}]
+                  (if cycleCount
+                    (for [cycle (range cycleCount)]
+                      (assoc activity
+                             :id (str id cycle)
+                             :description
+                             (str description " (" (inc cycle) " of " cycleCount ")")
+                             :cycleIdx (inc cycle)))
+                    activity)))
+               flatten
                vec))
         routine {:id (str (or (:id data) (gensym (:routineName data))))
                  :name (:routineName data)
@@ -309,6 +321,8 @@
       {:db (if existing-routine-index
              (assoc-in db [:persisted-state :my-routines existing-routine-index] routine)
              (update-in db [:persisted-state :my-routines] p/consv routine))})))
+
+(flatten(map (fn [{:keys [r] :as a}] (if r (repeat r a) a)) [{:a 1}  {:b 2} {:r 3}]))
 
 (defn routine? [page] (= "Routine" page))
 

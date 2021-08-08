@@ -19,6 +19,8 @@ export function TabBar({ state, descriptors, navigation, ...props }) {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme();
   const { colorMode, toggleColorMode } = useColorMode();
+  const isMiddle = state.index === 1;
+
   if (focusedOptions.tabBarVisible === false) {
     return null;
   }
@@ -114,6 +116,7 @@ export function TabBar({ state, descriptors, navigation, ...props }) {
     >
       <View style={styles.currentRoutines}>
         {Boolean(props?.activeRoutines) &&
+          !isMiddle &&
           props.activeRoutines
             .filter((r) => r?.currentActivity?.name)
             .map((activityProps, index) => {
@@ -134,7 +137,7 @@ export function TabBar({ state, descriptors, navigation, ...props }) {
 }
 const styles = StyleSheet.create({
   currentRoutines: {
-   width: "100%", 
+    width: "100%",
   },
   blurTab: {
     position: "absolute",

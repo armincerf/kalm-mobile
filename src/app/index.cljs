@@ -80,7 +80,7 @@
                                       (j/call :getCurrentRoute)
                                       (j/get :name))]
            (when (not= prev-route-name current-route-name)
-               ;; This is where you can do side effecty things like analytics
+             ;; This is where you can do side effecty things like analytics
              (when (routine? current-route-name)
                (let [id (-> @!navigation-ref
                             (j/call :getCurrentRoute)

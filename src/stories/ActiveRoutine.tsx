@@ -93,7 +93,11 @@ export default ({
             >
               {currentActivity?.routineName}
             </Text>
-            <Text isTruncated>{currentActivity?.name}</Text>
+            <Text isTruncated>
+              {currentActivity?.description
+                ? currentActivity?.name + " - " + currentActivity.description
+                : currentActivity?.name}
+            </Text>
           </VStack>
         </HStack>
         <SmallControls

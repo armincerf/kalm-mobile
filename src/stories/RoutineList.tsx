@@ -1,43 +1,26 @@
 import React from "react";
 import {
   Box,
-  Button,
   View,
-  Text,
   Heading,
   StatusBar,
-  Pressable,
   SectionList,
-  Icon,
-  Image,
   Divider,
-  HStack,
-  VStack,
 } from "native-base";
 import {
   Alert,
-  Dimensions,
-  Platform,
   StyleSheet,
-  TouchableOpacity,
 } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AddRoutines from "./AddRoutines";
-import { AntDesign, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import {
-  SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { COLOR_ACCENT, COLOR_HIGHLIGHT, TAB_HEIGHT } from "./utils";
 import { Settings } from "./Settings";
 import { SwipeItem, SwipeUnderlay } from "./SwipeItem";
 import { UnderlayParams } from "react-native-swipeable-item";
 import Animated from "react-native-reanimated";
 import { TabBar } from "./TabBar";
-import { BlurView } from "expo-blur";
-import { useColorScheme } from "react-native";
-import { SmallControls } from "./Controls";
-import ActiveRoutine from "./ActiveRoutine";
 
 const Tab = createBottomTabNavigator();
 
@@ -83,12 +66,15 @@ const Routines = (props: RoutineListProps) => {
     <View style={styles.routineList}>
       <StatusBar barStyle={"default"} />
       <View p={4} flex={1}>
-        <Heading pb={4} pt={insets.top}>All Routines</Heading>
+        <Heading pb={4} pt={insets.top}>
+          All Routines
+        </Heading>
         <SectionList
           sections={data}
           ItemSeparatorComponent={() => <Divider bg="white" />}
           contentContainerStyle={{
             flexGrow: 1,
+            paddingBottom: 80 + (props?.activeRoutines?.length || 0) * 55,
           }}
           keyExtractor={(item, index) => item + index}
           renderItem={(props) => (
@@ -106,24 +92,49 @@ const Routines = (props: RoutineListProps) => {
             />
           )}
           renderSectionFooter={() => <View pb={4} />}
-          renderSectionHeader={({ section: { title } }) => (
-            <Box
-              _text={{
-                fontSize: 14,
-              }}
-            >
+          renderSectionHeader={({ section: { title } }) => {
+            let color;
+            switch (title) {
+              case "My Routines":
+                color = "green.300";
+                break;
+              case "Meditation":
+                color = "blue.300";
+                break;
+              case "Chores":
+                color = "orange.300";
+                break;
+              case "Daily Routines":
+                color = "red.300";
+                break;
+              case "Fitness":
+                color = "purple.300";
+                break;
+              case "Special Occasions":
+                color = "yellow.300";
+                break;
+              default:
+                color = "gray.300";
+                break;
+            }
+            return (
               <Box
-                _light={{ bg: "gray.100", _text: { color: "black" } }}
-                _dark={{ bg: "gray.800", _text: { color: "white" } }}
-                px={4}
-                py={2}
-                w="100%"
-                style={{ borderTopLeftRadius: 5, borderTopRightRadius: 5 }}
+                _text={{
+                  fontSize: 14,
+                }}
               >
-                {title}
+                <Box
+                  bg={color}
+                  px={4}
+                  py={2}
+                  w="100%"
+                  style={{ borderTopLeftRadius: 5, borderTopRightRadius: 5 }}
+                >
+                  {title}
+                </Box>
               </Box>
-            </Box>
-          )}
+            );
+          }}
         />
       </View>
     </View>
@@ -132,6 +143,7 @@ const Routines = (props: RoutineListProps) => {
 
 export type Activity = {
   name: string;
+  description?: string;
   duration?: number;
   image: { still: string; gif?: string };
   cycleIdx?: number;

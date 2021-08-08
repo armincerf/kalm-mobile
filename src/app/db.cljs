@@ -52,6 +52,49 @@
    :activities [{:cycle-count 5
                  :activity jumping-jacks}]})
 
+(def shopping
+  {:name "Get ready for bed"
+   :type "Daily Routines"
+   :id "Shopping"
+   :description "Swipe to edit"
+   :activities [{:name "Go to shops"
+                 :durationObj {:minutes 5}}
+                {:name "Blueberries"}
+                {:name "Raspberries"}
+                {:name "Any other fruit that looks good"}
+                {:name "Chicken"}
+                {:name "Yogurts"}
+                {:name "Bread"}
+                {:name "hot stuff"}
+                {:name "Pay up and go for a walk"
+                 :durationObj {:minutes 10}}
+                {:name "Start heading home"}]})
+
+(def lunch-time
+  {:name "Lunch time"
+   :type "Daily Routines"
+   :id "lunch"
+   :activities [{:name "Make some food"
+                 :description "Healthy or else"
+                 :durationObj {:minutes 10}}
+                {:name "sit outside and eat"
+                 :durationObj {:minutes 10}}
+                {:name "Feed fish"}]})
+
+(def music
+  {:name "Music practice"
+   :type "Daily Routines"
+   :id "music"
+   :activities [{:name "Pick a random instrument"}
+                {:name "Get setup and ready"
+                 :durationObj {:minutes 3}}
+                {:name "Practice scales"
+                 :durationObj {:minutes 5}}
+                {:name "Practice arpeggios"
+                 :durationObj {:minutes 5}}
+                {:name "Choose a song to play through"
+                 :durationObj {:minutes 20}}]})
+
 (def lazy
   {:name "Get ready for bed"
    :type "Chores"
@@ -173,7 +216,7 @@
         add-duration (fn [{:keys [durationObj] :as activity}]
                        (assoc activity :duration
                               (+ (* (:hours durationObj) 60 60 1000)
-                                 (* (:minutes durationObj) 60 100)
+                                 (* (:minutes durationObj) 60 1000)
                                  (* (:seconds durationObj) 1000))))
         activities
         (->> root-activity
@@ -205,7 +248,10 @@
                 {:persisted-state db-from-string}))
           default-routines (mapv gen-routine [my-activity
                                               random-chores
-                                              lazy])
+                                              lazy
+                                              shopping
+                                              lunch-time
+                                              music])
           routines-plus-defaults
           (distinct-by :id (concat (:my-routines db-from-string) default-routines))
           with-default-routines
