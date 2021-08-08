@@ -28,6 +28,7 @@ export const Settings = ({ data }) => {
           <Box
             px={5}
             py={2}
+            mt={52}
             rounded="md"
             bg="primary.200"
             _text={{

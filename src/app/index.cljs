@@ -91,10 +91,11 @@
                                 :headerBackTitle " "
                                 :headerTransparent true
                                 :headerMode "float"
-                                :headerBackground #(r/as-element
-                                                    [:> BlurView {:tint scheme
-                                                                  :intensity 100
-                                                                  :style (.-absoluteFill rn/StyleSheet)}])
+                                :headerBackground
+                                #(r/as-element
+                                  [:> BlurView {:tint scheme
+                                                :intensity 100
+                                                :style (.-absoluteFill rn/StyleSheet)}])
                                 :headerTintColor (if dark-mode?
                                                    c/highlight
                                                    c/accent)})]

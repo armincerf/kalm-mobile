@@ -69,7 +69,7 @@ const Routines = (props: RoutineListProps) => {
         }}
         keyExtractor={(item, index) => item + index}
         ListHeaderComponent={() => (
-          <View pt={insets.top + 8} pb={4}>
+          <View pt={insets.top + 50} pb={4}>
             <Heading>Routines</Heading>
           </View>
         )}
