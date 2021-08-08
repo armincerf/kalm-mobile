@@ -83,14 +83,14 @@ const AddRoutine = ({ field, index, ...props }) => {
           render={({ field }) => (
             <Switch
               colorScheme="emerald"
-              isChecked={value}
+              isChecked={field.value}
               onToggle={() => {
-                props.setValue(name, !value);
+                props.setValue(name, !field.value);
               }}
             />
           )}
           name={name}
-          defaultValue={false}
+          defaultValue={value}
         />
       </HStack>
     );
