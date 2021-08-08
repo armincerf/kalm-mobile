@@ -63,7 +63,7 @@
   [{:keys [db]} [_ id direction]]
   (let [idx ((if (= :prev direction) dec inc) (get-in db [:persisted-state id :current-idx]))]
     (if (and idx id)
-      {:fx [[:notifs/cancel!]
+      {:fx [[:notifs/cancel! (get-in db [:persisted-state id :notif-ids])]
             [:dispatch [:start-routine id idx]]]
        :db (assoc-in db [:persisted-state id :scheduled?] false)}
       (rf/console :error "No routine to resume" id idx))))
@@ -73,6 +73,7 @@
   (log "routine complete" {:id id})
   {:db (-> db
            (update-in [:persisted-state :active-routines] disj id)
+           (assoc-in [:persisted-state id :notif-ids] [])
            (p/dissoc-in [:persisted-state id]))})
 
 (defn shuffle-routine
@@ -124,13 +125,13 @@
     (rf/console :warn "nil timeout passed to timeout-fn" key fn)))
 
 (defn pause
-  [{:keys [db]} [_ key]]
-  {:fx [[:timeout-pause key]
-        [:dispatch [:save-time-left key]]
-        [:notifs/cancel!]]
+  [{:keys [db]} [_ id]]
+  {:fx [[:timeout-pause id]
+        [:dispatch [:save-time-left id]]
+        [:notifs/cancel! (get-in db [:persisted-state id :notif-ids])]]
    :db (-> db
-           (assoc-in [:persisted-state key :scheduled?] false)
-           (assoc-in [:persisted-state key :timeout-paused?] true))})
+           (assoc-in [:persisted-state id :scheduled?] false)
+           (assoc-in [:persisted-state id :timeout-paused?] true))})
 
 (defn save-time-left
   [{:keys [db]} [_ key]]
@@ -147,7 +148,7 @@
   [{:keys [db]} [_ id]]
   (log "stopping " id)
   {:fx [[:timeout-clear id]
-        [:notifs/cancel!]]
+        [:notifs/cancel! (get-in db [:persisted-state id :notif-ids])]]
    :db (-> db
            (update-in [:persisted-state :active-routines] disj id)
            (update :persisted-state dissoc id))})
@@ -180,45 +181,55 @@
 
 (rf/reg-fx
  :notifs/cancel!
- (fn []
-   (log "cancelling all notifs")
-   (when-not c/web?
-     (.cancelAllScheduledNotificationsAsync Notifications))))
+ (fn [ids]
+   (when (and (seq ids) (not c/web?))
+     (log "cancelling notifs" ids)
+     (doseq [id ids]
+       (.cancelScheduledNotificationAsync Notifications id)))))
+
+(defn notification-scheduled
+  [{:keys [db]} [_ routine-id notif-id]]
+  {:db (update-in db [:persisted-state routine-id :notif-ids] conj notif-id)})
 
 (rf/reg-fx
  :notifs/schedule!
- (fn [activities]
+ (fn [{:keys [activities id]}]
    (when-not c/web?
-     (let [duration (atom 0)
-           done? (atom false)]
+     (let [duration (atom 0)]
        (doall
         (map-indexed
          (fn [idx activity]
-           (let [next-activity (get (vec activities) (inc idx))]
-             (when (:name next-activity)
-               (swap! duration #(+ % (:duration activity)))
-               (let [trigger-time @duration
-                     left (str/join
-                           (interpose ", "
-                                      (for [[k v] (:durationObj activity)]
-                                        (str v " " (name k)))))
-                     message (if-let [next (:name (get (vec activities) (+ 2 idx)))]
+           (when-let [next-activity (get (vec activities) (inc idx))]
+             (swap! duration #(+ % (:duration activity)))
+             (let [trigger-time @duration
+                   left (str/join
+                         (interpose ", "
+                                    (remove
+                                     nil?
+                                     (for [[k v] (:durationObj activity)]
+                                       (when (and v (pos? v))
+                                         (str v " " (name k)))))))
+                   message (if-let [next (:name (get (vec activities) (+ 2 idx)))]
 
-                               (rand-nth
-                                [(str "You have " left " until '" next "' begins!")
-                                 "Do it now or I'll show you real panik :<"
-                                 (when-let [feel (:feeling activity)]
+                             (rand-nth
+                              [(str "You have " left " until '" next "' begins!")
+                               "Do it now or I'll show you real panik :<"
+                               (let [feel (:feeling activity)]
+                                 (when (seq feel)
                                    (case feel
                                      "kalm" (str "This is a nice one! Enjoy!")
                                      "panik" (str "Don't panik, you got this!")
-                                     "extraPanik" (str "Yeah.. I wouldn't want to do it either...")))])
-                               (str "Come back to the app when you're done!"
-                                    (when (pos? (:duration next-activity))
-                                      (str  " Only "
-                                            left
-                                            " left to go!"))))]
-                 (log "sending" #js [idx (:name next-activity) message " in " (/ trigger-time 1000)])
-                 (c/send-notification (clj->js (assoc next-activity :message message)) (/ trigger-time 1000))))))
+                                     "extraPanik" (str "Yeah.. I wouldn't want to do it either...")
+                                     "Have fun!")))])
+                             (str "Come back to the app when you're done!"
+                                  (when (pos? (:duration next-activity))
+                                    (str  " Only "
+                                          left
+                                          " left to go!"))))]
+               (log "sending" #js [idx id (:name next-activity) message " in " (/ trigger-time 1000)])
+               (c/send-notification (clj->js (assoc next-activity :message message))
+                                    (/ trigger-time 1000)
+                                    #(rf/dispatch [:notification-scheduled id %])))))
          activities))))))
 
 (defn take-while+
@@ -245,9 +256,8 @@
                             (drop idx)
                             (filter :hasNotification)
                             (take-while+ :duration))]
-         (prn "to notify = " to-notify)
          (when (seq to-notify)
-           {:fx [[:notifs/schedule! to-notify]]
+           {:fx [[:notifs/schedule! {:activities to-notify :id routine-id}]]
             :db (assoc-in db path true)}))))))
 
 (defn dispatch-later
@@ -374,6 +384,7 @@
 (rf/reg-event-fx :save-time-left [base-interceptors] save-time-left)
 (rf/reg-event-fx :resume [base-interceptors] resume)
 (rf/reg-event-fx :stop [base-interceptors] stop)
+(rf/reg-event-fx :notification-scheduled [base-interceptors] notification-scheduled)
 (rf/reg-event-fx :shuffle-routine [base-interceptors] shuffle-routine)
 (rf/reg-event-fx :routine-complete [base-interceptors] routine-complete)
 (rf/reg-event-fx :navigate [base-interceptors] navigate)

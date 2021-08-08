@@ -45,7 +45,6 @@ export const Player = forwardRef(
     const renderContent = () => {
       useEffect(() => {
         if (isOpen && !currentActivity && modalizeRef?.current) {
-          console.log("closing");
           modalizeRef.current.close();
         }
       }, [currentActivity]);

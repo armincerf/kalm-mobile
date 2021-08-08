@@ -10,7 +10,6 @@
   (when (and (:hasGif activity) handlers/GIPHY (not (:image activity)))
     (-> (handlers/fetch-image (:name activity))
         (.then (fn [{:keys [^js body status]}]
-                 (prn "res")
                  (if (= 200 status)
                    (let [data (js->clj (.-data body))
                          image
@@ -26,7 +25,7 @@
                                        (get "url"))]
                      {:gif gif
                       :still still})
-                   (prn "error" body))))
+                   (handlers/log "error" body))))
         (.then #(rf/dispatch [:update-activity
                               (assoc activity :image %) routine-id index]))
         (.catch (fn [err] (.track c/analytics "Error fetching image" #js {:key handlers/GIPHY
@@ -101,9 +100,10 @@
 (defn edit-routine
   [{:keys [navigation]} animated]
   (let [routine @(rf/subscribe [:current-routine])]
-    (when (:activities routine)
+    (when-let [activities (:activities routine)]
       [:> c/AddRoutine
-       {:storedRoutine routine
+       ;; remove all but first cycle if needed
+       {:storedRoutine (assoc routine :activities (remove (fn [activity] (> (:cycleIdx activity) 1)) activities))
         :animated animated
         :handleSubmit (fn [props]
                         (rf/dispatch [:add-routine props])

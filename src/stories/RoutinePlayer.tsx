@@ -29,11 +29,12 @@ export const PlayListView = ({
   currentIdx,
   bg,
   accent,
+  contrast,
 }) => {
   const { name, description, totalTime, activities, type } = routine;
   const insets = useSafeAreaInsets();
   const playerHeader = (
-    <View style={{paddingTop: insets.top}}>
+    <View style={{ paddingTop: insets.top }}>
       <Center key="image">
         <Box
           bg="black"
@@ -158,6 +159,8 @@ export const PlayListView = ({
       )}
       renderItem={({ item, index }) => {
         const isDone = isRunning && index < currentIdx;
+        const isPlaying = isRunning && index === currentIdx;
+        const textCol = isPlaying ? accent : contrast;
         const textDec = isDone ? 0.4 : 1;
         return (
           <TouchableOpacity onPress={() => handleStart(index)}>
@@ -204,13 +207,19 @@ export const PlayListView = ({
                     justifyContent="center"
                     w="90%"
                   >
-                    <Text isTruncated opacity={textDec} fontSize="lg">
+                    <Text
+                      isTruncated
+                      opacity={textDec}
+                      color={textCol}
+                      fontSize="lg"
+                    >
                       {item.name}
                     </Text>
                     {Boolean(item.description) && (
                       <Text
                         isTruncated
                         opacity={textDec}
+                        color={textCol}
                         fontSize="sm"
                         paddingLeft="4px"
                       >
@@ -219,7 +228,11 @@ export const PlayListView = ({
                     )}
                   </VStack>
                 </HStack>
-                <Text fontSize="xs" opacity={textDec} color="gray.500">
+                <Text
+                  fontSize="xs"
+                  opacity={textDec}
+                  color={isPlaying ? accent : "gray.500"}
+                >
                   {item?.duration
                     ? new Date(item.duration).toISOString().substr(11, 8)
                     : "Manual"}
@@ -237,6 +250,7 @@ export const PlayListView = ({
 export default ({ handleStart, ...props }) => {
   const bg = useColorModeValue("gray.200", "gray.800");
   const accent = useColorModeValue(COLOR_ACCENT, COLOR_HIGHLIGHT);
+  const contrast = useColorModeValue("black", "white");
   const animated = useRef(new Animated.Value(0)).current;
   const modalRef = useRef(null);
   return (
@@ -257,6 +271,7 @@ export default ({ handleStart, ...props }) => {
           handleStart(i);
         }}
         bg={bg}
+        contrast={contrast}
         accent={accent}
       />
     </View>

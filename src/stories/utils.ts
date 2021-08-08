@@ -1,8 +1,7 @@
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
-import React, { useState, useEffect, useRef } from "react";
-import { Text, View, Button, Platform } from "react-native";
-import * as TaskManager from "expo-task-manager";
+import { useEffect, useRef } from "react";
+import { Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Haptics from "expo-haptics";
 
@@ -74,7 +73,7 @@ export const getName = () => {
 };
 
 export const COLOR_ACCENT = "#0891b2";
-export const COLOR_HIGHLIGHT = "#A5F3FC"
+export const COLOR_HIGHLIGHT = "#A5F3FC";
 export const TAB_HEIGHT = 70;
 
 Notifications.setNotificationHandler({
@@ -85,9 +84,9 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export async function schedulePushNotification(activity, seconds) {
-  if (activity && activity?.name) {
-    await Notifications.scheduleNotificationAsync({
+export async function schedulePushNotification(activity, seconds, callback) {
+  if (activity && activity?.name && seconds) {
+    const id = await Notifications.scheduleNotificationAsync({
       content: {
         _contentAvailable: true,
         title: `It's time to start '${activity.name}'!`,
@@ -98,6 +97,7 @@ export async function schedulePushNotification(activity, seconds) {
 
       trigger: { seconds: seconds },
     });
+    callback(id);
   }
 }
 
@@ -159,12 +159,12 @@ export const useCombinedRefs = (...refs) => {
   const targetRef = useRef();
 
   useEffect(() => {
-    refs.forEach(ref => {
+    refs.forEach((ref) => {
       if (!ref) {
         return;
       }
 
-      if (typeof ref === 'function') {
+      if (typeof ref === "function") {
         ref(targetRef.current);
       } else {
         ref.current = targetRef.current;

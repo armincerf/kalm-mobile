@@ -32,7 +32,6 @@
  :paused?
  (fn [db [_ id]]
    (let [id (or id (get-in db [:current-page :props :id]))]
-     (prn "id " id)
      (some-> db
              :persisted-state
              (get id)

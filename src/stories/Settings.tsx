@@ -3,7 +3,6 @@ import { Box, Text, Button, Center, SectionList } from "native-base";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export const Settings = ({ data }) => {
-  console.log("settings", data);
 
   return (
     <SafeAreaView>
