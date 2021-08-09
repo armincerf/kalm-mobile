@@ -13,4 +13,6 @@
    :release {:closure-defines
              {app.handlers/GIPHY
               #shadow/env "GIPHY_API_KEY_PROD"}}
-   :devtools {:enabled false}}}}
+   :devtools {:autoload true
+              :preloads [devtools.preload
+                         shadow.expo.keep-awake]}}}}

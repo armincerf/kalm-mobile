@@ -31,7 +31,8 @@ export const PlayListView = ({
   accent,
   contrast,
 }) => {
-  const { name, description, totalTime, activities, type } = routine;
+  const { name, description, totalTime, type } = routine;
+  const activities = routine.activities.filter(({ name }) => name);
   const insets = useSafeAreaInsets();
   const playerHeader = (
     <View style={{ paddingTop: insets.top }}>

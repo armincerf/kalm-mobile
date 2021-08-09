@@ -204,7 +204,7 @@ export default ({
         flex: 1,
         justifyContent: "space-between",
         marginBottom: insets.bottom + TAB_HEIGHT,
-        marginTop: insets.top + 10 + 50,
+        marginTop: insets.top + 10,
         borderRadius: 3,
       }}
     >

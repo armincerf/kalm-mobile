@@ -4,7 +4,7 @@
    ["@react-navigation/stack" :as rn-stack]
 
    ["react-native" :as rn]
-   ["expo-blur$BlurView" :as BlurView]
+   ["expo-blur" :refer [BlurView]]
    ["native-base" :refer [NativeBaseProvider
                           extendTheme]]
    ["react-native-portalize" :refer [Host]]
@@ -87,18 +87,20 @@
         (let [interpolate (fn [from to] (.interpolate animated #js {:inputRange #js [0 1]
                                                                     :outputRange #js [from to]}))
               header-options (fn [title]
-                               {:title title
-                                :headerBackTitle " "
-                                :headerTransparent true
-                                :headerMode "float"
-                                :headerBackground
-                                #(r/as-element
-                                  [:> BlurView {:tint scheme
-                                                :intensity 100
-                                                :style (.-absoluteFill rn/StyleSheet)}])
-                                :headerTintColor (if dark-mode?
-                                                   c/highlight
-                                                   c/accent)})]
+                               (merge
+                                {:title title
+                                 :headerBackTitle " "
+                                 :headerTransparent true
+                                 :headerMode "float"
+                                 :headerTintColor (if dark-mode?
+                                                    c/highlight
+                                                    c/accent)}
+                                (when BlurView
+                                  {:headerBackground
+                                   #(r/as-element
+                                     [:> BlurView {:tint scheme
+                                                   :intensity 100
+                                                   :style (.-absoluteFill rn/StyleSheet)}])})))]
           [:> c/Layout
            {:style {:borderRadius (interpolate 0 20)
                     :transform [{:scale (interpolate 1 0.92)}]

@@ -22,7 +22,8 @@ const Tab = createBottomTabNavigator();
 const renderUnderlayLeft = (
   { item, percentOpen }: UnderlayParams<any>,
   del,
-  edit
+  edit,
+  copy
 ) => (
   <Animated.View style={[styles.underlayLeft, { opacity: percentOpen }]}>
     <SwipeUnderlay
@@ -51,12 +52,24 @@ const renderUnderlayLeft = (
       pressFn={() => edit(item.id)}
       iconName="edit"
     />
+    <SwipeUnderlay
+      bg="blue.600"
+      style={{ borderBottomRightRadius: 5 }}
+      pressFn={() => copy(item.id)}
+      iconName="copy1"
+    />
   </Animated.View>
 );
 
 const Routines = (props: RoutineListProps) => {
   const insets = useSafeAreaInsets();
-  const { data, handlePress, handleEditRoutine, handleDeleteRoutine } = props;
+  const {
+    data,
+    handlePress,
+    handleEditRoutine,
+    handleDeleteRoutine,
+    handleCopyRoutine,
+  } = props;
   return (
     <View style={styles.routineList}>
       <StatusBar barStyle={"default"} />
@@ -69,7 +82,7 @@ const Routines = (props: RoutineListProps) => {
         }}
         keyExtractor={(item, index) => item + index}
         ListHeaderComponent={() => (
-          <View pt={insets.top + 50} pb={4}>
+          <View pt={insets.top} pb={4}>
             <Heading>Routines</Heading>
           </View>
         )}
@@ -78,7 +91,12 @@ const Routines = (props: RoutineListProps) => {
             {...props}
             drag={false}
             renderUnderlayLeft={(props) =>
-              renderUnderlayLeft(props, handleDeleteRoutine, handleEditRoutine)
+              renderUnderlayLeft(
+                props,
+                handleDeleteRoutine,
+                handleEditRoutine,
+                handleCopyRoutine
+              )
             }
             handlePress={handlePress}
           />
@@ -160,6 +178,7 @@ export type RoutineListProps = {
   activeRoutines: any[];
   handleDeleteRoutine: (id: string) => void;
   handleEditRoutine: (id: string) => void;
+  handleCopyRoutine: (e: any) => void;
   handleNext: (id: string) => void;
   handlePlay: (id: string) => void;
   handlePause: (id: string) => void;

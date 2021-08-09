@@ -80,6 +80,7 @@
      {:data grouped-routines
       :activeRoutines active-routines
       :handleDeleteRoutine (fn [routine-id] (rf/dispatch [:delete-routine routine-id]))
+      :handleCopyRoutine (fn [routine-id] (rf/dispatch [:copy-routine routine-id]))
       :handleEditRoutine (fn [routine-id] (rf/dispatch [:edit-routine navigation routine-id]))
       :handleNext #(rf/dispatch [:skip-activity %])
       :handlePlay #(rf/dispatch [:resume %])
@@ -107,4 +108,5 @@
         :animated animated
         :handleSubmit (fn [props]
                         (rf/dispatch [:add-routine props])
-                        (.goBack navigation))}])))
+                        (when navigation
+                          (.goBack ^js navigation)))}])))

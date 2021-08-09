@@ -52,7 +52,7 @@ export const SwipeItem = ({
       }}
       overSwipe={50}
       renderUnderlayLeft={renderUnderlayLeft}
-      snapPointsLeft={[50, 100]}
+      snapPointsLeft={[50, 100, 150]}
     >
       <TouchableOpacity onPress={(e) => handlePress(newItem)}>
         <Box
@@ -69,7 +69,7 @@ export const SwipeItem = ({
               <MaterialCommunityIcons name="drag" size={24} color="white" />
             </TouchableOpacity>
           )}
-          {Boolean(item?.cycleCount && item.cycleCount >= 1) && (
+          {Boolean(item?.cycleCount && item.cycleCount > 1) && (
             <Text style={styles.cycles}>{`${item.cycleCount} Cycles`}</Text>
           )}
           <Text

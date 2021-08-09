@@ -271,6 +271,27 @@
      "re-frame: ignoring bad :dispatch-later value:" effect)
     (.set timeout key #(rf/dispatch dispatch) ms)))
 
+(defn copy-routine
+  [{:keys [db]} [_ id]]
+  (if-let [routine (db/routine-by-id db id)]
+    (let [;; strip ' (n)' if present
+          parse-name (fn [name] (when name (str/replace name #"\s\(\d*\)" "")))
+          name (parse-name (:name routine))
+          new-id (str name (random-uuid))
+          new-routine
+          (assoc routine
+                 :id new-id
+                 ;; add ' (n)' to end of name
+                 :name (str name
+                            " ("
+                            (->> [:persisted-state :my-routines]
+                                 (get-in db)
+                                 (filter #(= name (parse-name (str (:name %)))))
+                                 count)
+                            ")"))]
+      {:db (update-in db [:persisted-state :my-routines] p/consv new-routine)})
+    (log "no routine found for id " id)))
+
 (defn edit-routine
   [{:keys [db]} [_ navigation id]]
   {:db (assoc-in db [:state :edit-routine] id)
@@ -278,6 +299,7 @@
 
 (defn delete-routine
   [{:keys [db]} [_ id]]
+  (log "deleting " id)
   (let [current-routines (get-in db [:persisted-state :my-routines])
         existing-routine-index (p/find-index current-routines {:id id})]
     (when existing-routine-index
@@ -315,7 +337,7 @@
                (map
                 (fn process-cycles
                   [{:keys [cycleCount id description] :as activity}]
-                  (if cycleCount
+                  (if (and (number? cycleCount) (> cycleCount 1))
                     (for [cycle (range cycleCount)]
                       (assoc activity
                              :id (str id cycle)
@@ -384,6 +406,7 @@
 (rf/reg-event-fx :save-time-left [base-interceptors] save-time-left)
 (rf/reg-event-fx :resume [base-interceptors] resume)
 (rf/reg-event-fx :stop [base-interceptors] stop)
+(rf/reg-event-fx :copy-routine [base-interceptors] copy-routine)
 (rf/reg-event-fx :notification-scheduled [base-interceptors] notification-scheduled)
 (rf/reg-event-fx :shuffle-routine [base-interceptors] shuffle-routine)
 (rf/reg-event-fx :routine-complete [base-interceptors] routine-complete)

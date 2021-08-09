@@ -29,6 +29,7 @@
 
 (def jumping-jacks
   {:name "Jumping Jacks"
+   :type "Fitness"
    :description "Jump as many times as you can"
    :activities [{:name "Jump as much as you can in the time limit, also do some jacks."
                  :durationObj {:hours 10 :minutes 10 :seconds 10}
@@ -38,7 +39,7 @@
 (def my-activity
   {:name "Morning Routine"
    :id "1"
-   :type "Meditation"
+   :type "Fitness"
    :description "a good routine"
    :activities [{:cycle-count 5
                  :activity push-ups}
@@ -75,7 +76,7 @@
    :type "Daily Routines"
    :id "lunch"
    :activities [{:name "Make some food"
-                 :description "Healthy or else"
+                 :description "Healthy or else u will die"
                  :durationObj {:minutes 10}}
                 {:name "sit outside and eat"
                  :durationObj {:minutes 10}}
@@ -85,7 +86,7 @@
   {:name "Music practice"
    :type "Daily Routines"
    :id "music"
-   :activities [{:name "Pick a random instrument"}
+   :activities [{:name "Pick an instrument"}
                 {:name "Get setup and ready"
                  :durationObj {:minutes 3}}
                 {:name "Practice scales"
@@ -99,10 +100,10 @@
   {:name "Get ready for bed"
    :type "Chores"
    :id "3"
-   :description "do this or you won't sleep"
    :activities [{:name "Brush Teeth"
                  :description "Hold brush and hit teeth with it"
                  :pre-activity [{:name "Get in the position"
+                                 :description "Hold brush and hit teeth with it"
                                  :durationObj {:seconds 3}}]
                  :activities [{:name "brush upper left"
                                :durationObj {:seconds 30}}
@@ -112,15 +113,23 @@
                                :durationObj {:seconds 30}}
 
                               {:name "brush lower right"
-                               :durationObj {:seconds 30}}
-                              ]
+                               :durationObj {:seconds 30}}]
                  :post-activity [{:name "Rinse mouth"}]}
                 {:name "shower"
-                 :description "get water on you"
-                 :activities [{:name "have shower"}]}
-                {:name "bed"
-                 :description "get into bed and close eyes"
-                 :activities [{:name "go to sleep"}]}]})
+                 :description "get water on you"}
+                {:name "go to sleep"
+                 :description "get into bed and close eyes"}]})
+
+(defn meditation
+  [mins]
+  {:name (str mins " Minute meditation")
+   :type "Meditation"
+   :id (str "med" mins)
+   :activities [{:name "Get into a relaxed but focused position"}
+                {:name "Meditate"
+                 :description "Come back to your breathing when your mind wanders"
+                 :durationObj
+                 (mins->obj mins)}]})
 
 (def chores
   [{:name "Hoover"
@@ -190,13 +199,15 @@
 (defn gen-routine
   [root-activity]
   (let [gen-cycles
-        (fn [activities cycle-count]
+        (fn gen-cycles
+          [activities cycle-count]
           (for [cycle (range cycle-count)]
             (map
              #(assoc % :cycleIdx (inc cycle) :total-cycles cycle-count)
              activities)))
         gen-activity
-        (fn [props]
+        (fn gen-activity
+          [props]
           (let [activity? (some? (:name props))
                 activity (if activity?
                            props
@@ -209,17 +220,20 @@
              (:pre-activity activity)
              (gen-cycles activities (or cycle-count 1))
              (:post-activity activity))))
-        gen-activities (fn [activities]
+        gen-activities (fn gen-activities
+                         [activities]
                          (for [props activities]
                            (gen-activity props)))
-        add-duration (fn [{:keys [durationObj] :as activity}]
+        add-duration (fn add-duration
+                       [{:keys [durationObj] :as activity}]
                        (if durationObj
                          (assoc activity :duration
                                 (+ (* (:hours durationObj) 60 60 1000)
                                    (* (:minutes durationObj) 60 1000)
                                    (* (:seconds durationObj) 1000)))
                          activity))
-        add-image (fn [{:keys [image] :as activity}]
+        add-image (fn add-image
+                    [{:keys [image] :as activity}]
                     (if image
                       activity
                       (assoc activity :hasGif true)))
@@ -251,15 +265,14 @@
                :persisted-state {:active-routines #{}}
                :version "version-not-set"}
               (when db-from-string
-                {:persisted-state db-from-string}))
-          default-routines (mapv gen-routine [random-chores
-                                              jumping-jacks
-                                              shopping
-                                              lunch-time
-                                              music
-                                              my-activity
-                                              push-ups
-                                              lazy])
+                {:persisted-state (assoc db-from-string :active-routines #{})}))
+          default-routines (mapv gen-routine (concat [random-chores
+                                                      shopping
+                                                      lunch-time
+                                                      music
+                                                      my-activity
+                                                      lazy]
+                                                     (map #(meditation %) [5 10 15 20 30])))
           routines-plus-defaults
           (distinct-by :id (concat (:my-routines db-from-string) default-routines))
           with-default-routines

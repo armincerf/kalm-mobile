@@ -2,12 +2,15 @@
   "expo": {
       "userInterfaceStyle": "automatic",
       "name": "Kalm Routines",
-      "icon": "./assets/playstore.png",
-      "version": "1.0.1",
+      "icon": "./assets/icon.png",
+      "version": "1.1.0",
       "slug": "kalm-routine",
+      "splash": {
+          "image": "./assets/splash.png"
+      },
       "ios": {
           "bundleIdentifier": "com.armincerf.kalmroutines",
-          "buildNumber": "1.0.1",
+          "buildNumber": "1.1.0",
           "supportsTablet": true,
           "infoPlist": {
               "UIBackgroundModes": [
@@ -17,7 +20,7 @@
       },
       "android": {
           "package": "com.armincerf.kalm_routines",
-          "versionCode": 2
+          "versionCode": 3
       },
       "owner": "armincerf",
       "privacy": "public",
@@ -32,7 +35,7 @@
           "fallbackToCacheTimeout": 5000
       },
       "assetBundlePatterns": [
-          "**/*"
+          "assets/images/*"
       ]
   }
 }
