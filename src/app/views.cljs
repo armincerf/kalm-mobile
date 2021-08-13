@@ -3,6 +3,7 @@
    [reagent.core :as r]
    [re-frame.core :as rf]
    [app.handlers :as handlers]
+   ["react-native" :as rn]
    [app.components :refer [RoutineList] :as c]))
 
 (defn add-random-activity-image
@@ -88,15 +89,25 @@
       :handleStop #(rf/dispatch [:stop %])
       :animated animated
       :handleAddRoutine (fn [props] (rf/dispatch [:add-routine props]))
-      :settingsData [{:title "Admin stuff" :data [{:label "version 0.0.12"}
-                                                  {:label "Wipe Db" :action #(rf/dispatch [:wipe-db])}
-                                                  {:label "Register for notifications" :action #(c/register-notifications)}]}]
+      :settingsData [{:title "Settings" :data [{:label "version 0.0.12" :action #(js/alert "Please do not click this button again.")}
+                                               {:label "Wipe Db (WARNING, this deletes all routines you have created!)" :action #(rf/dispatch [:wipe-db])}
+                                               {:label "Send me some feedback :)" :action #(.navigate navigation "Feedback Modal")}]}]
       :handlePress
       (fn [^js a]
         (rf/dispatch
          [:navigate navigation "Routine"
           (.-id a)]))}]))
 
+(defn feedback-modal
+  [{:keys [navigation]}]
+  [:> c/FeedbackForm
+   {:handleSubmit (fn submit
+                    [^js data]
+                    (do
+                      (when (or (seq (.-description data))
+                                (seq (.-feeling data)))
+                        (.track c/analytics "Submit Feedback" data))
+                      (.goBack navigation)))}])
 
 (defn edit-routine
   [{:keys [navigation]} animated]

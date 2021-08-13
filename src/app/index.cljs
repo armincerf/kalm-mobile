@@ -79,6 +79,7 @@
              (when (routine? (:name page))
                (let [id (-> page :props :id)]
                  (rf/dispatch [:save-time-left id])))
+
              (.screen c/analytics current-route-name))
            (swap! !route-name-ref merge {:current current-route-name})))}
       [:> Host
@@ -106,16 +107,21 @@
                     :transform [{:scale (interpolate 1 0.92)}]
                     :opacity (interpolate 1 0.75)}}
            [:> (.-Navigator ^js stack)
-            (screen {:name "My Routines"
-                     :options (header-options "Home")
-                     :component (r/reactify-component
-                                 #(views/routines % animated))})
-            (screen {:name "EditRoutine"
-                     :options (header-options (str "Editing " (:name routine)))
-                     :component (r/reactify-component #(views/edit-routine % animated))})
-            (screen {:name "Routine"
-                     :options (header-options (or (:name routine) "Routine"))
-                     :component (r/reactify-component #(screen-main % animated))})]])]]]]))
+            [:> (.-Group ^js stack)
+             (screen {:name "My Routines"
+                      :options (header-options "Home")
+                      :component (r/reactify-component
+                                  #(views/routines % animated))})
+             (screen {:name "EditRoutine"
+                      :options (header-options (str "Editing " (:name routine)))
+                      :component (r/reactify-component #(views/edit-routine % animated))})
+             (screen {:name "Routine"
+                      :options (header-options (or (:name routine) "Routine"))
+                      :component (r/reactify-component #(screen-main % animated))})]
+            [:> (.-Group ^js stack)
+             {:screenOptions {:presentation "modal"}}
+             (screen {:name "Feedback Modal"
+                      :component (r/reactify-component views/feedback-modal)})]]])]]]]))
 
 (defn start
   []

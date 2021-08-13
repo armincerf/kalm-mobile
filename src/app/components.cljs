@@ -17,6 +17,8 @@
 
 (def analytics (.-default (js/require "../src/stories/analytics.js")))
 
+(def FeedbackForm (.-default (js/require "../src/stories/FeedbackForm.tsx")))
+
 (def get-name (.-getName utils))
 
 

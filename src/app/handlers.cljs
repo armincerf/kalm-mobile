@@ -14,8 +14,6 @@
   ([message] (log message {}))
   ([message data]
    (js/console.log message (clj->js data))
-   (when-not c/web?
-     (.track c/analytics message (clj->js data)))
    nil))
 
 (def debug? ^boolean goog.DEBUG)
