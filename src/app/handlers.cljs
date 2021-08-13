@@ -50,7 +50,6 @@
 
 (def base-interceptors
   [(when debug? rf/debug)
-   track
    persist-db])
 
 (defn initialize-db [_ [_ db]] db)
@@ -409,14 +408,13 @@
 (rf/reg-event-fx :copy-routine [base-interceptors] copy-routine)
 (rf/reg-event-fx :notification-scheduled [base-interceptors] notification-scheduled)
 (rf/reg-event-fx :shuffle-routine [base-interceptors] shuffle-routine)
-(rf/reg-event-fx :routine-complete [base-interceptors] routine-complete)
+(rf/reg-event-fx :routine-complete [base-interceptors track] routine-complete)
 (rf/reg-event-fx :navigate [base-interceptors] navigate)
-(rf/reg-event-fx :add-routine [base-interceptors] add-routine)
+(rf/reg-event-fx :add-routine [base-interceptors track] add-routine)
 (rf/reg-event-fx :edit-routine [base-interceptors] edit-routine)
 (rf/reg-event-fx :delete-routine [base-interceptors] delete-routine)
 (rf/reg-event-fx :update-activity [base-interceptors] update-activity)
 (rf/reg-event-db :wipe-db [base-interceptors] (fn [_ _] {:persisted-state {}}))
 
 (rf/reg-event-db :add-current-routine [base-interceptors] (fn [db [_ routine]]
-                                                            (def routine routine)
                                                             (assoc-in db [:state :current-routine] routine)))

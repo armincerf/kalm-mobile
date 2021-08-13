@@ -124,7 +124,7 @@
 (defonce analytics
   (when-not c/web?
     (do
-      (.init c/analytics "66OTJI4K6H10")
+      (.init c/analytics "3SON19EERQE3")
       "done")))
 
 (defn init
